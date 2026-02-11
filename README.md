@@ -2,6 +2,12 @@
 
 This repository contains LaTeX lecture notes for __MIT 16.S897: Spacecraft Attitude Determination & Control__, as taught in the Spring 2026 semester by Prof. Z. Manchester.
 
+I take no credit for the content of these notes; I have purely typeset them for my own enrichment and as a courtesy to other students in the course.
+
+Handwritten lecture notes may be found on Z. Manchester's GitHub link: [zacmanchester/spacecraft-attitude-course](https://github.com/zacmanchester/spacecraft-attitude-course/)
+
+Lecture videos may be found on YouTube: [@roboticexplorationlab](https://www.youtube.com/@roboticexplorationlab).
+
 ## Topics
 
 The lecture notes cover the following topics.
