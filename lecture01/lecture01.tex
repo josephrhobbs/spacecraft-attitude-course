@@ -1,0 +1,250 @@
+\documentclass[12pt]{article}
+
+\usepackage{fancyhdr}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%% COURSE INFORMATION
+\newcommand{\thecourse}{MIT 16.S897}
+\newcommand{\thecoursename}{Spacecraft Attitude Determination \& Control}
+
+%% LECTURE INFORMATION
+\newcommand{\thelecture}{1}
+\newcommand{\thelecturename}{Intro and Rotation Matrix Overview}
+\newcommand{\thelecturedate}{February 3, 2026}
+
+%% PAGE SETUP
+\pagestyle{fancy}
+\lhead{\thecourse \\ \textit{\thecoursename}}
+\rhead{Lecture \thelecture \\ \textit{\thelecturename}}
+
+\title{{\Large \thecourse} \\ \textbf{Lecture \thelecture} \\ \textsc{\thelecturename}}
+\author{Lecture by Zachary Manchester \\ Typesetting by Joseph Hobbs}
+\date{\thelecturedate}
+
+\begin{document}
+	\maketitle
+	\tableofcontents
+	
+	\section{Why We Care}
+	
+	We care about spacecraft attitude determination and control systems (ADCS) because:
+	
+	\begin{enumerate}
+		\item Attitude determination and control is a core discipline of spacecraft engineering.
+		\item Almost all spacecraft have to know what needs to point where, and how well it needs to do that.
+		\item Attitude is intimately connected to all other spacecraft functions, including power, thermal, propulsion, telemetry \& command, and payload.
+	\end{enumerate}
+	
+	\section{A Brief History of Attitude}
+	
+	\paragraph{Sputnik, 1957} Sputnik was the first satellite to achieve Earth orbit.  However, Sputnik had no ADCS and therefore had a completely uncontrolled attitude.
+	
+	\paragraph{Explorer 1, 1958} Explorer 1 lacked ADCS, so instead the mission designers planned to \textbf{spin-stabilize} the spacecraft along its long axis.  However, the long antennas caused energy dissipation and the spacecraft went into a ``flat spin."  This required physicists and engineers to reconsider their understanding of 3D rigid-body mechanics.
+	
+	\paragraph{Syncom, 1963} The Syncom satellite relayed the 1964 Olympics, allowing people to watch the Olympics live on television around the world.  The spacecraft was ``short and fat", allowing spin stabilization to work effectively.
+	
+	\paragraph{TACSAT 1, 1969} TACSAT used \textbf{dual-spin stability} to ensure attitude stability.
+	
+	\paragraph{Discoverer 2 (Corona), 1959} Spy satellite for spying on the USSR.  The spacecraft had the first 3-DOF ADCS and the attitude was fully actively stabilized.  Film cameras imaged the surface, and film canisters reentered for retrieval.
+	
+	\paragraph{Intelsat 5, 1980} Intelsat represented the era of the \textbf{modern spacecraft design} era.  The Intelsat uses reaction wheels, feedback control, and Kalman filters for active attitude stability.  Active attitude stability meant more efficient solar panels, allowing antennas with high-power transmitters.
+	
+	\paragraph{Juno, 2011} The Juno spacecraft is spin-stabilized about its cylindrical axis.
+	
+	\paragraph{MicroMAS, 2018} The MicroMAS mission uses dual-spin stability for a CubeSat, bringing older ideas into a more modern time.
+	
+	Spin stabilization is critical for contemporary missions in thruster firings and SAFE mode operations.
+	
+	\section{Topics for This Course}
+	
+	This course will cover the following topics.
+	
+	\begin{enumerate}
+		\item Attitude parameterizations and \( \mathrm{SO(3)} \)
+		\item Rigid-body and gyrostat dynamics
+		\item Damping and environmental perturbations
+		\item Spinning spacecraft and stability
+		\item Attitude determination: sensor measurements and TRIAD
+		\item Attitude determination: Wahba's problem and solution methods
+		\item Attitude determination: Kalman filters
+		\item Attitude control: passive solutions
+		\item Attitude control: feedback control
+		\item Calibration and performance analysis
+		\item Case studies and advanced topics
+	\end{enumerate}
+	
+	\section{What Is Attitude?}
+	
+	Attitude is a \textbf{relative rotation between two reference frames}.  Typically, for Earth orbit, this is the relative rotation \textit{from} the spacecraft's body frame \textit{to} the Earth-centered inertial (ECI) frame.  Attitude is parameterized by a \textbf{Lie group}, \( \mathrm{SO(3)} \).
+	
+	\section{What Is a Reference Frame?}
+	
+	A reference frame is a \textbf{set of mutually orthogonal basis vectors} that form a right-handed coordinate system.  For the purposes of this course, each \textit{reference frame} will correspond to a \textit{rigid body}.
+	
+	We will deal with two kinds of reference frames: \textbf{inertial frames} and \textbf{body-fixed frames}.  In inertial or \textit{Newtonian} frames, Newton's laws hold, because the frame is not accelerating.  Body-fixed frames are attached to an accelerating or rotating rigid body; in these frames, Newton's laws do not hold because of fictitious forces (centrifugal force, Coriolis force).
+	
+	\section{Vectors and Reference Frames}
+	
+	We will define the notion of a \textbf{physical vector}, which is a vector existing independent of a choice of reference frame.  Physical vectors will be denoted with an underline; for example, we will write \( \underline{v} \).
+	
+	When we want to \textit{perform calculations} with a vector, we must \textbf{project} \( \underline{v} \) into a \textit{reference frame} and write its components, like so.
+	
+	\begin{align*}
+		\underline{v} &= {}^N v_1 \underline{n}_1 + {}^N v_2 \underline{n}_2 + {}^N v_3 \underline{n}_3 \\
+		&= \begin{bmatrix}
+			\underline{n}_1 \\
+			\underline{n}_2 \\
+			\underline{n}_3
+		\end{bmatrix}^\mathrm{T}
+		\begin{bmatrix}
+			{}^N v_1 \\
+			{}^N v_2 \\
+			{}^N v_3
+		\end{bmatrix} \\
+		&= \underline{n}^\mathrm{T} {}^N v
+	\end{align*}
+	
+	It is \textit{very important} to distinguish a physical vector \( \underline{v} \) from the components of a vector in a given reference frame \( {}^N v \).  We use the left superscript to denote the reference frame.  Typically, \( N \) will denote inertial (Newtonian) frames, and \( B \) will denote body frames.  A vector \( \underline{v} \) may be written in a different frame by selecting different basis vectors.
+	
+	\begin{align*}
+		\underline{v} &= {}^B v_1 \underline{b}_1 + {}^B v_2 \underline{b}_2 + {}^B v_3 \underline{b}_3 \\
+		&= \begin{bmatrix}
+			\underline{b}_1 \\
+			\underline{b}_2 \\
+			\underline{b}_3
+		\end{bmatrix}^\mathrm{T}
+		\begin{bmatrix}
+			{}^B v_1 \\
+			{}^B v_2 \\
+			{}^B v_3
+		\end{bmatrix} \\
+		&= \underline{b}^\mathrm{T} {}^B v
+	\end{align*}
+	
+	\section{How Do We Parameterize Attitude?}
+	
+	In this course, attitude will always be written as a rotation \textit{from} the body-fixed frame \( B \) \textit{to} the inertial frame \( N \).  There exist many ways to numerically parameterize attitude.
+	
+	\paragraph{Euler Angles (roll-pitch-yaw)} Euler angles are minimal and fairly intuitive.  However, they have kinematic singularities at \( \pi/2 \) and introduce trigonometric functions into kinematics.  \textbf{Never use Euler angles!}
+	
+	\paragraph{Rotation Matrices} Rotation matrices never have kinematic singularities, they are easy to use (they turn rotation into multiplication), and their kinematics are linear.  However, they are highly redundant, as they use nine numbers to express three degrees of freedom.
+	
+	\paragraph{Quaternions} Quaternions never have kinematic singularities and they are extremely useful for simulation.  However, they are slightly redundant, using four numbers to express three degrees of freedom.
+	
+	\paragraph{Axis-Angle Vector} Axis-angle vectors are minimal and more intuitive than Euler angles.  However, they have kinematic singularities at \( \pm \pi \).
+	
+	\paragraph{Gibbs/Rodrigues Vector} These are minimal and have polynomial kinematics.  However, they also have singularities at \( \pm \pi \), though this can be modified to be \( \pm 2\pi \).
+	
+	\section{Rotation Matrices}
+	
+	\textbf{Rotation matrices} are used to convert between reference frames.  Because this course always considers attitude to be a rotation from \( B \) to \( N \), all rotation matrices will be considered as describing this rotation.  The rotation matrix \( Q \) has the property that
+	
+	\begin{equation}
+		{}^N v = Q {}^B v .
+	\end{equation}
+	
+	Because \( \underline{v} \) can be written either in terms of its body or its inertial components, we have
+	
+	\begin{equation}
+		\underline{v} = \begin{bmatrix}
+			\underline{b}_1 \\
+			\underline{b}_2 \\
+			\underline{b}_3
+		\end{bmatrix}^\mathrm{T}
+		\begin{bmatrix}
+			{}^B v_1 \\
+			{}^B v_2 \\
+			{}^B v_3
+		\end{bmatrix} = \begin{bmatrix}
+		\underline{n}_1 \\
+		\underline{n}_2 \\
+		\underline{n}_3
+		\end{bmatrix}^\mathrm{T}
+		\begin{bmatrix}
+		{}^N v_1 \\
+		{}^N v_2 \\
+		{}^N v_3
+		\end{bmatrix} .
+	\end{equation}
+	
+	This relationship allows us to derive the components of a rotation matrix.
+	
+	\begin{equation}
+		{}^N v = \begin{bmatrix}
+			\underline{n}_1 \cdot \underline{v} \\
+			\underline{n}_2 \cdot \underline{v} \\
+			\underline{n}_3 \cdot \underline{v}
+		\end{bmatrix} = \underline{n} \cdot \underline{v} = \underline{n} \cdot \left( \underline{b}^\mathrm{T} {}^B v \right)
+	\end{equation}
+	
+	Because matrix multiplication is associative, we have
+	
+	\begin{equation}
+		{}^N v = \left( \underline{n} \cdot \underline{b}^\mathrm{T} \right) {}^B v = Q {}^B v \Rightarrow \boxed{ Q = \underline{n} \cdot \underline{b}^\mathrm{T} } .
+	\end{equation}
+	
+	\subsection{Inverse}
+	
+	The inverse of \( Q \) must obey the property
+	
+	\begin{equation}
+		Q^{-1} Q = I
+	\end{equation}
+	
+	where \( I \) is the identity matrix.  It is not difficult to show that
+	
+	\begin{equation*}
+		Q^\mathrm{T} = \underline{b} \cdot \underline{n}^\mathrm{T} \Rightarrow Q^\mathrm{T} Q = \underline{b} \cdot \underline{n}^\mathrm{T} \cdot \underline{n} \cdot \underline{b}^\mathrm{T} .
+	\end{equation*}
+	
+	The product \( \underline{n}^\mathrm{T} \underline{n} \) evaluates to \( I \), which results in the entire product being simply \( I \).  Therefore,
+	
+	\begin{equation}
+		\boxed{Q^{-1} = Q^\mathrm{T}} .
+	\end{equation}
+	
+	\subsection{Determinant}
+	
+	The \textbf{determinant} of a square matrix measures, informally, the amount that it ``stretches" its eigenvectors.  The determinant is also the \textit{signed volume} of the parallelepiped formed by the column vectors of the matrix.  Because rotations do not ``stretch" space, preserve volume, and do not reflect, the determinant of any rotation matrix must be unity.
+	
+	\begin{equation}
+		\boxed{\det Q = 1}
+	\end{equation}
+	
+	It is important to note that a determinant less than zero implies that the corresponding matrix reflects space through the origin.
+	
+	\section{A Little Group Theory}
+	
+	A \textbf{group} is defined to be a set \( G \), closed under the multiplication rule \( \cdot \), subject to the following rules.
+	
+	\begin{enumerate}
+		\item \textbf{Associativity}.  For all \( a, b, c \in G \), the expression \( (a \cdot b) \cdot c = a \cdot (b \cdot c) \) is true.
+		
+		\item \textbf{Identity}.  There exists an element \( e \in G \) such that \( a \cdot e = e \cdot a = a \) for every \( a \in G \).  This element \( e \) is called the \textit{identity element}.
+		
+		\item \textbf{Inverse}.  For every \( a \in G \), there exists an \textit{inverse element} \( a^{-1} \) such that \( a^{-1} \cdot a = a \cdot a^{-1} = e \), where \( e \) is the identity element.
+	\end{enumerate}
+	
+	\subsection{Example Groups}
+	
+	The following are examples of groups.
+	
+	\begin{itemize}
+		\item Positive real numbers, closed under the product.
+		
+		\item Discrete symmetry groups, such as \( D_4 \) (the group of \( \pi/2 \) rotations and reflections on a square), closed under composition.
+		
+		\item Square invertible matrices of dimension \( N \) (\( \mathrm{GL(N)} \)), closed under matrix multiplication.
+		
+		\item Rotations in \( N \) dimensions (\( \mathrm{SO(N)} \)), closed under composition.
+		
+		\item Rigid body motion in \( N \) dimensions (\( \mathrm{SE}(N) \)), closed under composition.
+	\end{itemize}
+	
+	Groups may be \textit{discrete} or \textit{continuous}.  A discrete group has a finite or countably infinite number of elements.  A continuous group has an uncountably infinite number of elements, and there exists a notion of differentiability in these groups.  Continuous groups are often called \textbf{Lie groups} (pronounced like ``lee").
+	
+	The \textbf{group of all possible 3D rotations} is referred to as \( \mathrm{SO(3)} \).  The O refers to the \textit{orthogonal group}, meaning the group of all matrices \( Q \) obeying \( Q^\mathrm{T} = Q^{-1} \).  The pair SO refers to the \textit{special orthogonal group}, which adds the condition \( \det Q = +1 \) (disallowing reflections).  The numeral 3 indicates that this group corresponds to 3D rotations, and therefore matrix elements of this group are written as square matrices of dimension 3.
+\end{document}
