@@ -11,9 +11,9 @@
 \newcommand{\thecoursename}{Spacecraft Attitude Determination \& Control}
 
 %% LECTURE INFORMATION
-\newcommand{\thelecture}{0}
-\newcommand{\thelecturename}{A Fascinating Lecture}
-\newcommand{\thelecturedate}{January 1, 2000}
+\newcommand{\thelecture}{3}
+\newcommand{\thelecturename}{Quaternions, Part 2 \& Rigid Bodies}
+\newcommand{\thelecturedate}{February 10, 2026}
 
 %% PAGE SETUP
 \pagestyle{fancy}
@@ -28,11 +28,376 @@
 	\maketitle
 	\tableofcontents
 	
-	\section{First Topic}
+	\section{Quaternions, Part 2}
 	
-	Lots of interesting information!
+	Extending the ``planar quaternion" from the previous lecture, we introduce the \textbf{quaternion}
 	
-	\newpage
+	\begin{equation}
+		q = \begin{bmatrix}
+			\cos(\theta/2) \\
+			r \sin(\theta/2)
+		\end{bmatrix}
+	\end{equation}
 	
-	More interesting information!
+	where \( r \) is a unit vector representing the axis of rotation, and \( \theta \) is the angle of rotation about that axis.  In a similar way that complex numbers are written as the sum of \textit{real} and \textit{imaginary} parts, quaternions are the sum of the \textbf{scalar part} and the \textbf{vector part}.  In the above notation, the first row is the scalar part and the second row is the vector part.  In this course, the scalar part will always be written first, though other conventions call for the opposite order.  For brevity, we will write
+	
+	\begin{equation*}
+		q = \begin{bmatrix}
+			s \\ v
+		\end{bmatrix}
+	\end{equation*}
+	
+	where \( s \) is the scalar part and \( v \) is the vector part.  The corresponding axis-angle vector to this quaternion is clearly
+	
+	\begin{equation*}
+		\phi = \theta r .
+	\end{equation*}
+	
+	It is important to note that every rotation is described by a \textbf{unit quaternion}.
+	
+	\begin{equation*}
+		q^\mathrm{T} q = \cos^2\left(\frac\theta2\right) + r^\mathrm{T} r \sin^2\left(\frac\theta2\right) = 1.
+	\end{equation*}
+	
+	Given any quaternion, it is extremely easy to find the ``closest" unit quaternion; simply determine the norm of the quaternion according to
+	
+	\begin{equation}
+		\boxed{\left\Vert q \right\Vert^2 = q^\mathrm{T} q}
+	\end{equation}
+	
+	and divide every component by that value.  This is far simpler than finding the ``closest" orthogonal matrix to a given square matrix, which is typically done by singular value decomposition (SVD).
+	
+	\subsection{Quaternion Product}
+	
+	The definition of a Lie group requires that its elements are closed under a multiplication rule.  If we wish to use unit quaternions to parameterize \( \mathrm{SO(3)} \), we must define the \textbf{quaternion product} like so.
+	
+	\begin{equation}
+		q_1 \star q_2 = \begin{bmatrix}
+			s_1 \\ v_1
+		\end{bmatrix}
+		\star
+		\begin{bmatrix}
+			s_2 \\ v_2
+		\end{bmatrix} := \boxed{\begin{bmatrix}
+			s_1 s_2 - v_1^\mathrm{T} v_2 \\
+			s_1 v_2 + s_2 v_1 + v_1 \times v_2
+		\end{bmatrix}}
+	\end{equation}
+	
+	Notice that, due to the vector cross product, the quaternion product is \textbf{non-commutative} in general (\( q_1 \star q_2 \ne q_2 \star q_1 \)).  It is also important to note that the quaternion product is linear in each \( q_1 \) and \( q_2 \), meaning we can write it as a matrix multiplication, recalling the \textit{hat map} for 3D vectors.
+	
+	\begin{equation*}
+		q_1 \star q_2 = \begin{bmatrix}
+			s_1 & -v_1^\mathrm{T} \\
+			v_1 & s_1 I + \hat{v}_1
+		\end{bmatrix}
+		\begin{bmatrix}
+			s_2 \\ v_2
+		\end{bmatrix}
+		= \boxed{ L(q_1) q_2 }
+	\end{equation*}
+	
+	We introduce the notation \( L(q_1) \) for this matrix, because left-multiplication by \( L(q_1) \) is equivalent to quaternion \textit{left}-multiplication by \( q_1 \).  We can also write a similar matrix, \( R(q_2) \), like so.
+	
+	\begin{equation*}
+		q_1 \star q_2 = \begin{bmatrix}
+			s_2 & -v_2^\mathrm{T} \\
+			v_2 & s_2 I - \hat{v}_2
+		\end{bmatrix}
+		\begin{bmatrix}
+			s_1 \\ v_1
+		\end{bmatrix}
+		= \boxed{ R(q_2) q_1 }
+	\end{equation*}
+	
+	We call this matrix \( R(q_2) \) because left-multiplication by \( R(q_2) \) is equivalent to quaternion \textit{right}-multiplication by \( q_2 \).  Finally, notice that, because quaternion inverse involves only flipping the sign on the vector part, the matrices \( L \) and \( R \) obey the property
+	
+	\begin{equation*}
+		\boxed{L(q^\dagger) = L(q)^\mathrm{T}} \text{ and } \boxed{ R(q^\dagger) = R(q)^\mathrm{T} } .
+	\end{equation*}
+	
+	\subsection{Identity Quaternion}
+	
+	The \textbf{identity quaternion} \( q_0 \) has the property that
+	
+	\begin{equation*}
+		q_0 \star q = q \star q_0 = q
+	\end{equation*}
+	
+	for any quaternion \( q \).  It is not hard to see that the identity quaternion is uniquely given by a unit scalar part and zero vector part.
+	
+	\begin{equation}
+		\boxed{ q_0 = \begin{bmatrix}
+			1 \\ 0
+		\end{bmatrix}}
+	\end{equation}
+	
+	\subsection{Quaternion Inverse}
+	
+	The \textbf{quaternion inverse} \( q^\dagger \) is defined for every quaternion \( q \).  For a unit quaternion \( q \), its inverse is defined such that \( q^\dagger \) describes the inverse rotation as \( q \).  In other words, \( q^\dagger \) corresponds to rotation about the same axis as \( q \), but by the negative angle.  For a unit quaternion,
+	
+	\begin{equation*}
+		q^\dagger = \begin{bmatrix}
+			\cos(-\theta/2) \\
+			r \sin(-\theta/2)
+		\end{bmatrix} .
+	\end{equation*}
+	
+	Using the properties of the cosine and sine functions,
+	
+	\begin{equation}
+		\boxed{q^\dagger = \begin{bmatrix}
+			\cos(\theta/2) \\
+			- r \sin(\theta/2)
+		\end{bmatrix}} .
+	\end{equation}
+	
+	In other words, the quaternion inverse of a unit quaternion \( q \) is easily computed by negating the vector part of \( q \).
+	
+	\subsection{Double Cover of \( \mathrm{SO(3)} \)}
+	
+	In the same way as last lecture, it is not hard to show that
+	
+	\begin{equation}
+		\boxed{q(\theta + 2\pi) = -q}
+	\end{equation}
+	
+	and therefore every quaternion and its negation correspond to the same rotation.  Therefore, the set of unit quaternions are a \textbf{double cover} of \( \mathrm{SO(3)} \).  It is an unfortunate result of group theory that we cannot write quaternions differently such that they do not doubly cover \( \mathrm{SO(3)} \).
+	
+	\subsection{Quaternions as Rotations}
+	
+	To rotate a vector \( {}^B x \) using a quaternion \( q \), we must compute the product
+	
+	\begin{equation}
+		\boxed{
+		\begin{bmatrix}
+			0 \\ {}^N x
+		\end{bmatrix}
+		= q \star
+		\begin{bmatrix}
+			0 \\ {}^B x
+		\end{bmatrix}
+		\star q^\dagger} .
+	\end{equation}
+	
+	Quaternion multiplication is associative, so we may compute these two products in either order.  Notice that, by our definitions and properties of \( L(q) \) and \( R(q) \), we have
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			0 \\ {}^N x
+		\end{bmatrix}
+		=
+		L(q) R(q^\dagger)
+		\begin{bmatrix}
+			0 \\ {}^B x
+		\end{bmatrix}
+		=
+		L(q) R(q)^\mathrm{T}
+		\begin{bmatrix}
+			0 \\ {}^B x
+		\end{bmatrix}
+	\end{equation*}
+	
+	and, because the quaternion product is associative, we can reverse the order of multiplications to get
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			0 \\ {}^N x
+		\end{bmatrix}
+		=
+		R(q^\dagger) L(q)
+		\begin{bmatrix}
+			0 \\ {}^B x
+		\end{bmatrix}
+		=
+		R(q)^\mathrm{T} L(q)
+		\begin{bmatrix}
+			0 \\ {}^B x
+		\end{bmatrix} .
+	\end{equation*}
+	
+	To make our notation slightly cleaner, we will introduce the linear operator \( H \), which converts a 3D vector into a quaternion with zero scalar part.
+	
+	\begin{equation*}
+		Hx =
+		\begin{bmatrix}
+			0 \\ x
+		\end{bmatrix}
+		\Rightarrow
+		H :=
+		\begin{bmatrix}
+			0 \\ I
+		\end{bmatrix}
+		=
+		\begin{bmatrix}
+			0 & 0 & 0 \\
+			1 & 0 & 0 \\
+			0 & 1 & 0 \\
+			0 & 0 & 1 
+		\end{bmatrix}
+	\end{equation*}
+	
+	Using \( H \), we write
+	
+	\begin{equation}
+		\boxed{{}^N x = H^\mathrm{T} L(q) R(q)^\mathrm{T} H {}^B x = H^\mathrm{T} R(q)^\mathrm{T} L(q) H {}^B x} .
+	\end{equation}
+	
+	\subsection{Quaternions and Rotation Matrices}
+	
+	It is interesting to note that quaternions \( q \) and rotation matrices \( Q \) have many similar properties.
+	
+	\begin{align}
+		Q^\mathrm{T} Q = I &\leftrightarrow q^\mathrm{T} q = 1 \\
+		Q_3 = Q_2 Q_1 &\leftrightarrow q_3 = q_2 \star q_1 \\
+		Q_1 = Q_2^\mathrm{T} Q_3 &\leftrightarrow q_1 = q_2^\dagger \star q_3 \\
+		{}^N \hat{x} = Q {}^B \hat{x} Q^\mathrm{T} &\leftrightarrow H {}^N x = q \star H {}^B x \star q^\dagger
+	\end{align}
+	
+	\subsection{Quaternion Kinematics}
+	
+	Let us remember our example of integrating an angular velocity \( \omega(t) \) to obtain a spacecraft attitude.  Suppose that, over a very small timestep \( \Delta t \), the quaternion \( q_1 \) rotates by \( \Delta q \) to become \( q_2 \).
+	
+	\begin{equation*}
+		q_2 = q_1 \star \Delta q = q_1 \star \begin{bmatrix}
+			\cos(\Delta \theta / 2) \\
+			r \sin(\Delta \theta / 2) \\
+		\end{bmatrix}
+	\end{equation*}
+	
+	Here, we take \( r \) to be the unit vector aligned with the axis of rotation (by the right-hand rule), and \( \Delta \theta \) to be the small angle rotated through in \( \Delta t \).  Mathematically, \( \omega(t) \cdot \Delta t = r \cdot \Delta \theta \).  Taking the small-angle approximation of the cosine and sine functions,
+	
+	\begin{equation*}
+		q_2 = q_1 \star \Delta q \approx q_1 \star \begin{bmatrix}
+			1 \\
+			r \cdot \Delta\theta / 2 \\
+		\end{bmatrix} .
+	\end{equation*}
+	
+	Evaluating the quaternion product and applying \( \omega(t) \cdot \Delta t = r \cdot \Delta \theta \),
+	
+	\begin{align*}
+		q_2 &\approx q_1 \star \left( q_0 + \frac{\Delta t}{2} H \omega(t) \right) \\
+		&= q_1 + \frac{\Delta t}{2} \cdot q_1 \star H\omega(t) .
+	\end{align*}
+	
+	Rearranging and taking the limit as \( \Delta t \rightarrow 0 \),
+	
+	\begin{align*}
+		\lim_{\Delta t \rightarrow 0} \frac{q_2 - q_1}{\Delta t} = \lim_{\Delta t \rightarrow 0} \frac12 L(q_1) H \omega(t) .
+	\end{align*}
+	
+	From this, we conclude that
+	
+	\begin{equation}
+		\boxed{\dot{q} = \frac12 L(q) H \omega(t)}
+	\end{equation}
+	
+	and we can integrate this numerically (for example, using Runge-Kutta) to obtain a quaternion result.  It will be useful for us later to define the \textbf{attitude Jacobian} \( G(q) \).
+	
+	\begin{equation}
+		\boxed{G(q) := L(q) H} \Rightarrow \dot{q} = \frac12 G(q) \omega
+	\end{equation}
+	
+	\subsection{Exponential Map}
+	
+	Because the attitude Jacobian \( G(q) \) is linear in \( q \), for constant angular velocity \( \omega \), we again have a linear first-order ODE for \( q \).  This suggests that we can again use the \textbf{exponential map} to obtain closed-form solutions for \( q \).  We define the \textbf{quaternion exponential map} \( \mathrm{expq}(\cdot) \) such that
+	
+	\begin{equation*}
+		\mathrm{expq}\left( \phi \right) = \begin{bmatrix}
+			\cos\left( \left\Vert \phi \right\Vert \right) \\
+			\phi / \left\Vert \phi \right\Vert \cdot \sin\left( \left\Vert \phi \right\Vert \right)
+		\end{bmatrix} .
+	\end{equation*}
+	
+	The closed-form solution to our linear ODE is therefore
+	
+	\begin{equation}
+		\boxed{q(0) = q_0 \Rightarrow q(t) = \mathrm{expq}\left( \frac12 \omega t \right)} .
+	\end{equation}
+	
+	It is important to note that, at \( \phi = 0 \), the exponential map experiences a point singularity, because the vector part is divided by zero.  For numerical stability, it is more preferable to define \( \mathrm{expq}(\cdot) \) equivalently as
+	
+	\begin{equation}
+		\boxed{\mathrm{expq}\left( \phi \right) = \begin{bmatrix}
+				\cos\left( \left\Vert \phi \right\Vert \right) \\
+				\phi \cdot \mathrm{sinc}\left( \left\Vert \phi \right\Vert \right)
+		\end{bmatrix}} .
+	\end{equation}
+	
+	where \( \mathrm{sinc}(x) := \sin(x) / x \) when \( x \ne 0 \) and \( \mathrm{sinc}(0) := 1 \).  This definition is continuous and differentiable everywhere, ensuring numerical stability.  Some computational tools define \( \mathrm{sinc}(x) := \sin(\pi x) / \pi x \).  When implementing the exponential map, check corresponding documentation to determine which definition your chosen tool uses for \( \mathrm{sinc}(\cdot) \).
+	
+	\section{Rigid-Body Dynamics}
+	
+	The study of rigid-body dynamics focuses on studying the relative motion of bodies on which \textbf{Euclidean distances between pairs of points are preserved}.  Practically, a body is considered ``rigid" if its structural modal frequencies are much faster (order of magnitude or more) than both its rigid-body frequencies and its controller's bandwidth.  Because we consider each rigid body to have its own reference frame, we will typically speak of relative motion of corresponding reference frames, rather than the bodies themselves.
+	
+	\subsection{Conserved Quantities}
+	
+	Under torque-free conditions, \textbf{angular momentum} is conserved in all \textit{inertial} reference frames.
+	
+	\begin{equation}
+		{}^N h = \text{constant}
+	\end{equation}
+	
+	This is \textit{not true} in non-inertial (rotating) reference frames.  However, it is true that the \textit{magnitudes} of angular momentum vectors are preserved in rotating frames (assuming no torque).  With no unbalanced forces or torques, \textbf{kinetic energy} is also preserved in the inertial frame.  Imagine a rigid body is rotating about its center of mass, but its center of mass is not moving.  We can write the kinetic energy of the rigid body \( T \) as the integral
+	
+	\begin{equation}
+		T = \int \frac12 ({}^N \dot{x})^\mathrm{T} ({}^N \dot{x}) \, \mathrm{d}m .
+	\end{equation}
+	
+	Recalling our expression for \( {}^N \dot{x} \), we can rewrite this as
+	
+	\begin{equation*}
+		T = \int \frac12 (Q \omega \times {}^B x)^\mathrm{T} (Q \omega \times {}^B x) \, \mathrm{d}m ,
+	\end{equation*}
+	
+	recalling that \( \omega \) expresses the angular velocity vector in the \textit{body} frame.  Distributing the transpose operator and rearranging,
+	
+	\begin{equation*}
+		T = \frac12 \int (\omega \times {}^B x)^\mathrm{T} Q^\mathrm{T} Q (\omega \times {}^B x) \, \mathrm{d}m .
+	\end{equation*}
+	
+	We can cancel \( Q^\mathrm{T} Q \) because all rotation matrices are orthogonal.  Using our previously defined ``hat map",
+	
+	\begin{equation*}
+		T = -\frac12 \int \omega^\mathrm{T} {}^B \hat{x} {}^B \hat{x} \omega \, \mathrm{d}m .
+	\end{equation*}
+	
+	Because \( \omega \) is independent of position on the body, we can factor it out from the integral.
+	
+	\begin{equation}
+		\boxed{T = \frac12 \omega^\mathrm{T} \left[ - \int {}^B \hat{x} {}^B \hat{x} \, \mathrm{d}m \right] \omega = \frac12 \omega^\mathrm{T} J \omega} .
+	\end{equation}
+	
+	In the next section, we will discuss the properties of the integral \( J \).
+	
+	\subsection{Moment of Inertia}
+	
+	The integral \( J \) is called the \textbf{moment of inertia} (or sometimes, the \textit{inertia tensor}) and is a function only of rigid-body geometry (it is not dependent on attitude because it is computed in the body frame).  It is also important to remember that \( \omega \) here is the \textit{body frame} angular velocity!
+	
+	\begin{equation*}
+		J := -\int {}^B \hat{x} {}^B \hat{x} \, \mathrm{d}m
+		=
+		\int \left( {}^B x^\mathrm{T} {}^B x I -  {}^B x {}^B x^\mathrm{T} \right) \, \mathrm{d}m
+	\end{equation*}
+	
+	It is important to note that the moment of inertia is always symmetric (\( J = J^\mathrm{T} \)).  Additionally, the moment of inertia is \textbf{positive semidefinite}, which means that it has non-negative eigenvalues and therefore the rotational kinetic energy defined above is always non-negative.  The eigenvectors of \( J \) are always orthogonal, and its eigenvectors are considered the \textbf{principle axes} of the rigid body in question.  Finally, the diagonal values of \( J \) obey the triangle inequality: \( J_{ii} + J_{jj} \ge J_{kk} \).
+	
+	\subsection{Composing Moments of Inertia}
+	
+	When two rigid bodies are combined, their moments of inertia \( J_1, J_2 \) can be composed using the following process.
+	
+	\begin{enumerate}
+		\item Find the center of mass of the combined body.
+		\item Sum the inertias \( J_1 \) and \( J_2 \).
+		\item Add to the sum of inertias two terms considering each constituent body as a point mass, located at its own center of mass.
+	\end{enumerate}
+	
+	Formally, the inertia of a combination of rigid bodies is computed as
+	
+	\begin{equation}
+		\boxed{J_{1+2} = J_1 + J_2 + m_1\left( r_1^\mathrm{T} r_1 I - r_1 r_1^\mathrm{T} \right) + m_2\left( r_2^\mathrm{T} r_2 I - r_2 r_2^\mathrm{T} \right)}
+	\end{equation}
+	
+	where \( m_1, m_2 \) are the respective masses of the two bodies and \( r_1, r_2 \) are the respective centers of mass of the two bodies, relative to their combined center of mass.  This result is known as the \textbf{parallel axis theorem}.
 \end{document}
