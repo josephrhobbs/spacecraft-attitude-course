@@ -37,14 +37,14 @@
 	Imagine an arbitrary vector \( \underline{x} \) ``fixed" to the satellite; that is, the vector is rotating with the satellite.  We know from rigid-body dynamics that the time derivative of a vector in a rotating frame (as viewed from the inertial frame) \( {}^N \dot{x} \) can be calculated as
 	
 	\begin{equation}
-		{}^N \dot{x} = {}^N \omega \times {}^N x + {}^B \dot{x} .
+		{}^N \dot{x} = {}^N \omega \times {}^N x + Q {}^B \dot{x} .
 	\end{equation}
 	
 	This result is often referred to as the \textbf{transport theorem}.  Here, we can ignore \( {}^B \dot{x} \) because we are assuming that \( \underline{x} \) is ``fixed" to the satellite and therefore not moving in the body frame.  Therefore, it holds that
 	
-	\begin{equation}
+	\begin{equation*}
 		{}^N \dot{x} = {}^N \omega \times {}^N x .
-	\end{equation}
+	\end{equation*}
 	
 	We can introduce the rotation matrix \( Q \) to get
 	
@@ -56,15 +56,15 @@
 	
 	A similar derivation may be used by recalling the product rule.  We know that
 	
-	\begin{equation}
+	\begin{equation*}
 		{}^N x = Q {}^B x
-	\end{equation}
+	\end{equation*}
 	
 	by the definition of \( Q \).  Therefore, taking the time derivative of both sides, we obtain
 	
-	\begin{equation}
+	\begin{equation*}
 		{}^N \dot{x} = Q {}^B \dot{x} + \dot{Q} {}^B x .
-	\end{equation}
+	\end{equation*}
 	
 	Again, we assume that \( {}^B \dot{x} = 0 \) to get
 	
@@ -100,21 +100,21 @@
 	
 	Using the hat map, we can derive a linear ODE for \( Q \).  From the transport theorem,
 	
-	\begin{equation}
+	\begin{equation*}
 		{}^N \dot{x} = Q \left( {}^B \omega \times {}^B x \right)
-	\end{equation}
+	\end{equation*}
 	
 	and using the product rule for derivatives,
 	
-	\begin{equation}
+	\begin{equation*}
 		{}^N \dot{x} = \dot{Q} {}^B x .
-	\end{equation}
+	\end{equation*}
 	
 	Combining these results and applying the hat map, we get
 	
-	\begin{equation}
+	\begin{equation*}
 		Q {}^B \hat\omega {}^B x = \dot{Q} {}^B x
-	\end{equation}
+	\end{equation*}
 	
 	and because this hold for any \( \underline{x} \), generally, we obtain the linear first-order ODE
 	
@@ -142,7 +142,12 @@
 		Q = \exp\left( \hat\omega t \right) \approx I + \hat\omega t \Rightarrow Qx \approx x + t \hat{\omega} x .
 	\end{equation}
 	
-	From this first-order approximation, we see that \( \frac{\partial Q}{\partial t} = \hat\omega \).  We say that the set of all skew-symmetric matrices \( \hat\omega t \) form the \textbf{Lie algebra} \( \mathfrak{so}\mathrm{(3)} \) of the Lie group \( \mathrm{SO(3)} \).  Lie algebras act as a ``linearization" of their corresponding groups about the identity element.  The exponential map allows us to convert between elements of the Lie algebra and elements of the Lie group, and the logarithmic map allows us to convert the other way.
+	We say that the set of all skew-symmetric matrices \( \hat\omega t \) form the \textbf{Lie algebra} \( \mathfrak{so}\mathrm{(3)} \) of the Lie group \( \mathrm{SO(3)} \).  Lie algebras act as a ``linearization" of their corresponding groups about the identity element.  The exponential map allows us to convert between elements of the Lie algebra and elements of the Lie group, and the logarithmic map allows us to convert the other way.
+	
+	\begin{align*}
+		\exp&: \mathfrak{so}\mathrm{(3)} \rightarrow \mathrm{SO(3)} \\
+		\log&: \mathrm{SO(3)} \rightarrow \mathfrak{so}\mathrm{(3)}
+	\end{align*}
 	
 	\section{Quaternions, Part 1}
 	
@@ -177,7 +182,7 @@
 		q(\theta + 2\pi) = -q(\theta)
 	\end{equation}
 	
-	and therefore there are exactly \textit{two} values of \( q \) for every rotation.  In other words, we say that these planar quaternions are a \textbf{double cover} for \( \mathrm{SO(2)} \), because they ``cover" the Lie group twice.
+	and therefore there are exactly \textit{two} values of \( q \) for every rotation.  In other words, we say that these planar quaternions are a \textbf{double cover} for \( \mathrm{SO(2)} \), because they ``cover" the Lie group twice.  We are willing to accept this consequence, however, because it is unavoidable when using quaternions to parameterize \( \mathrm{SO(3)} \).  For reasons beyond the scope of this course, it is proven impossible to cover \( \mathrm{SO(3)} \) with a \textit{minimal} parameterization without introducing kinematic singularities.
 	
 	\subsection{Composing Rotations}
 	
@@ -203,8 +208,25 @@
 	
 	The quaternion \( q_3 \) is the result of composing \( q_2 \) with \( q_1 \).  We can also write
 	
-	\begin{equation}
-		q_3 = \begin{bmatrix}
+	\begin{align*}
+		q_3 &= q_2 \circ q_1 \\
+		q_3 &= \begin{bmatrix}
+			\cos\left( \theta_2 / 2 \right) &
+			- \sin\left( \theta_2 / 2 \right) \\
+			\sin\left( \theta_2 / 2 \right) &
+			\cos\left( \theta_2 / 2 \right)
+		\end{bmatrix}
+		\begin{bmatrix}
+			\cos\left( \theta_1 / 2 \right) &
+			- \sin\left( \theta_1 / 2 \right) \\
+			\sin\left( \theta_1 / 2 \right) &
+			\cos\left( \theta_1 / 2 \right)
+		\end{bmatrix}
+		\begin{bmatrix}
+			1 \\
+			0
+		\end{bmatrix} \\
+		\therefore q_3 &= \begin{bmatrix}
 			\cos\left( \theta_2 / 2 \right) &
 			- \sin\left( \theta_2 / 2 \right) \\
 			\sin\left( \theta_2 / 2 \right) &
@@ -212,9 +234,9 @@
 		\end{bmatrix}
 		\begin{bmatrix}
 			\cos\left( \theta_1 / 2 \right) \\
-			\sin\left( \theta_1 / 2 \right)
+			\sin\left( \theta_1 / 2 \right) 
 		\end{bmatrix} .
-	\end{equation}
+	\end{align*}
 	
 	Using the notation \( c_1, c_2, s_1, s_2 \) for the respective cosine and sine terms of \( \theta_1, \theta_2 \), we can see this is
 	
@@ -227,8 +249,8 @@
 	
 	which mirrors the complex product of \( c_1 + i s_1 \) with \( c_2 + i s_2 \).  These ``planar quaternions" show a deep connection the complex numbers, echoing the original usage of ``full" (non-planar) quaternions as a 4-dimensional extension of the complex numbers.  We'll introduce the notation \( L(q) \) for the matrix encoding left-multiplication.
 	
-	\begin{equation}
-		q_3 = \begin{bmatrix}
+	\begin{align*}
+		q_3 &= \begin{bmatrix}
 			\cos\left( \theta_2 / 2 \right) &
 			- \sin\left( \theta_2 / 2 \right) \\
 			\sin\left( \theta_2 / 2 \right) &
@@ -237,16 +259,15 @@
 		\begin{bmatrix}
 			\cos\left( \theta_1 / 2 \right) \\
 			\sin\left( \theta_1 / 2 \right)
-		\end{bmatrix}
-		\Rightarrow
-		q_3 = L(q_2) q_1
-	\end{equation}
+		\end{bmatrix} \\
+		&= L(q_2) q_1
+	\end{align*}
 	
 	\subsection{Planar Quaternion Kinematics}
 	
 	Let us return to our example of integrating the output \( \omega(t) \) from a gyroscope to obtain a rotation; instead of using rotation matrices, we will use our planar quaternions for the planar case.  We have
 	
-	\begin{equation}
+	\begin{equation*}
 		q(\theta) = \begin{bmatrix}
 			\cos\left( \theta/2 \right) \\
 			\sin\left( \theta/2 \right)
@@ -256,20 +277,20 @@
 			-1/2 \cdot \sin\left( \theta/2 \right) \\
 			1/2 \cdot \cos\left( \theta/2 \right)
 		\end{bmatrix} .
-	\end{equation}
+	\end{equation*}
 	
 	Using the chain rule, we can obtain \( \dot{q} \) in terms of the angular velocity \( \omega(t) \) like so.
 	
-	\begin{equation}
+	\begin{equation*}
 		\dot{q} = \frac{\partial q}{\partial \theta} \dot\theta = \frac{\partial q}{\partial \theta} \omega = \begin{bmatrix}
 			-1/2 \cdot \sin\left( \theta/2 \right) \\
 			1/2 \cdot \cos\left( \theta/2 \right)
 		\end{bmatrix} \omega
-	\end{equation}
+	\end{equation*}
 	
 	We can also write this as
 	
-	\begin{equation}
+	\begin{equation*}
 		\dot{q} = \frac12 \begin{bmatrix}
 			\cos\left( \theta / 2 \right) &
 			- \sin\left( \theta / 2 \right) \\
@@ -281,7 +302,7 @@
 			1
 		\end{bmatrix}
 		\omega .
-	\end{equation}
+	\end{equation*}
 	
 	We write \( H := \begin{bmatrix} 0 & 1 \end{bmatrix}^\mathrm{T} \) and use our previously defined \( L(q) \) to have
 	
