@@ -28,11 +28,280 @@
 	\maketitle
 	\tableofcontents
 	
-	\section{First Topic}
+	\section{Rotation Kinematics}
 	
-	Lots of interesting information!
+	Suppose we have a satellite rotating in space, and we wish to determine its attitude by integrating the angular velocity \( \omega(t) \) given by a gyro.  Given \( \omega(t) \), how can we integrate it into a rotation matrix \( Q(t) \)?
 	
-	\newpage
+	\subsection{Transport Theorem}
 	
-	More interesting information!
+	Imagine an arbitrary vector \( \underline{x} \) ``fixed" to the satellite; that is, the vector is rotating with the satellite.  We know from rigid-body dynamics that the time derivative of a vector in a rotating frame (as viewed from the inertial frame) \( {}^N \dot{x} \) can be calculated as
+	
+	\begin{equation}
+		{}^N \dot{x} = {}^N \omega \times {}^N x + {}^B \dot{x} .
+	\end{equation}
+	
+	This result is often referred to as the \textbf{transport theorem}.  Here, we can ignore \( {}^B \dot{x} \) because we are assuming that \( \underline{x} \) is ``fixed" to the satellite and therefore not moving in the body frame.  Therefore, it holds that
+	
+	\begin{equation}
+		{}^N \dot{x} = {}^N \omega \times {}^N x .
+	\end{equation}
+	
+	We can introduce the rotation matrix \( Q \) to get
+	
+	\begin{equation}
+		{}^N \dot{x} = Q \left( {}^B \omega \times {}^B x \right) .
+	\end{equation}
+	
+	\subsection{Product Rule for Derivatives}
+	
+	A similar derivation may be used by recalling the product rule.  We know that
+	
+	\begin{equation}
+		{}^N x = Q {}^B x
+	\end{equation}
+	
+	by the definition of \( Q \).  Therefore, taking the time derivative of both sides, we obtain
+	
+	\begin{equation}
+		{}^N \dot{x} = Q {}^B \dot{x} + \dot{Q} {}^B x .
+	\end{equation}
+	
+	Again, we assume that \( {}^B \dot{x} = 0 \) to get
+	
+	\begin{equation}
+		{}^N \dot{x} = \dot{Q} {}^B x .
+	\end{equation}
+	
+	\subsection{The Hat Map}
+	
+	We now have two ways of expressing \( {}^N \dot{x} \) in terms of \( {}^B x \).  The final step, which will allow us to obtain an ODE for \( Q \), is to define the \textbf{hat map} \( \omega \rightarrow \hat{\omega} \) converting an angular velocity into a square matrix.  We know from the definition of the cross product that
+	
+	\begin{equation}
+		\omega \times x = \begin{bmatrix}
+			\omega_2 x_3 - \omega_3 x_2 \\
+			\omega_3 x_1 - \omega_1 x_3 \\
+			\omega_1 x_2 - \omega_2 x_1 
+		\end{bmatrix} = \begin{bmatrix}
+		0 & -\omega_3 & \omega_2 \\
+		\omega_3 & 0 & -\omega_1 \\
+		-\omega_2 & \omega_1 & 0
+		\end{bmatrix} x = \hat{\omega} x .
+	\end{equation}
+	
+	We made no assumptions about \( x \), which implies that, in general, left-multiplication by the matrix \( \hat{\omega} \) is equivalent to cross-product left-multiplication by the vector \( \omega \).  Notice that the matrix \( \hat{\omega} \) obeys the special property
+	
+	\begin{equation}
+		\boxed{\hat\omega^\mathrm{T} = -\hat\omega} .
+	\end{equation}
+	
+	In general, matrices obeying this property are called \textbf{skew-symmetric matrices}.  Notice that because \( \omega \times x = -x \times \omega \), it is true that \( \hat\omega x = -\hat{x} \omega \).  We will take note of this property, as it will be useful to us later.
+	
+	\subsection{Linear ODE for \( Q \)}
+	
+	Using the hat map, we can derive a linear ODE for \( Q \).  From the transport theorem,
+	
+	\begin{equation}
+		{}^N \dot{x} = Q \left( {}^B \omega \times {}^B x \right)
+	\end{equation}
+	
+	and using the product rule for derivatives,
+	
+	\begin{equation}
+		{}^N \dot{x} = \dot{Q} {}^B x .
+	\end{equation}
+	
+	Combining these results and applying the hat map, we get
+	
+	\begin{equation}
+		Q {}^B \hat\omega {}^B x = \dot{Q} {}^B x
+	\end{equation}
+	
+	and because this hold for any \( \underline{x} \), generally, we obtain the linear first-order ODE
+	
+	\begin{equation}
+		\boxed{ \dot{Q} = Q {}^B \hat\omega } .
+	\end{equation}
+	
+	\subsection{Closed-Form Solution for \( Q(t) \)}
+	
+	For constant \( \omega \), this yields the closed-form solution
+	
+	\begin{equation}
+		\boxed{Q(t) = Q(0) \exp\left( {}^B \hat\omega t \right)} .
+	\end{equation}
+	
+	Here, the \textbf{exponential map} \( \exp(\cdot) \) maps from axis-angle vectors to rotation matrices.  This is useful for sampling random rotations; sampling a random axis-angle vector from a multivariate Gaussian gives ``nicely" distributed rotation matrices on \( \mathrm{SO(3)} \).  By comparison, sampling random Euler angles gives ugly, poorly-behaved distributions on the Lie group.  The exponential map for matrices is implemented in many standard computational toolboxes, such as Scipy, MATLAB, and the C standard library.  It is important to note that this exponential map can be inverted using the equally ubiquitous \textbf{logarithmic map}.
+	
+	\begin{equation}
+		\hat\omega t = \log\left( Q \right)
+	\end{equation}
+	
+	For small rotations, subject to \( \left\Vert \omega t \right\Vert \ll 1 \), we can linearize the exponential map about \( \hat\omega = 0 \) to get
+	
+	\begin{equation}
+		Q = \exp\left( \hat\omega t \right) \approx I + \hat\omega t \Rightarrow Qx \approx x + t \hat{\omega} x .
+	\end{equation}
+	
+	From this first-order approximation, we see that \( \frac{\partial Q}{\partial t} = \hat\omega \).  We say that the set of all skew-symmetric matrices \( \hat\omega t \) form the \textbf{Lie algebra} \( \mathfrak{so}\mathrm{(3)} \) of the Lie group \( \mathrm{SO(3)} \).  Lie algebras act as a ``linearization" of their corresponding groups about the identity element.  The exponential map allows us to convert between elements of the Lie algebra and elements of the Lie group, and the logarithmic map allows us to convert the other way.
+	
+	\section{Quaternions, Part 1}
+	
+	In this lecture, we derive a ``planar quaternion" for describing rotations in the plane.  In the next lecture, we will show how the behaviors derived here extend elegantly into ``full" (non-planar) quaternions.
+	
+	\subsection{The Jump Discontinuity}
+	
+	Planar rotations are described by a single degree of freedom, \( \theta \).  To ensure that each rotation is uniquely described by a single \( \theta \), we impose \( -\pi < \theta \le \pi \).  Unfortunately, as an object rotates, its corresponding \( \theta \) undergoes a jump discontinuity at \( \pm\pi \).  This makes describing the rotation rather difficult computationally, and can introduce singularities into Jacobian matrices.
+	
+	\subsection{Planar Quaternions}
+	
+	We can remedy this problem by ``popping up" the line segment \( (-\pi, \pi] \) into two dimensions.  We will select the parameterization
+	
+	\begin{equation}
+		q(\theta) = \begin{bmatrix}
+			\cos\left( \theta/2 \right) \\
+			\sin\left( \theta/2 \right)
+		\end{bmatrix} .
+	\end{equation}
+	
+	Unfortunately, we still have the jump discontinuity at \( \theta = \pm\pi \) because \( q \) goes from \( \begin{bmatrix}
+		0 & -1
+	\end{bmatrix}^\mathrm{T} \) to \( \begin{bmatrix}
+		0 & +1
+	\end{bmatrix}^\mathrm{T} \) or vice versa.  Our solution involves copying this manifold, reflecting it through the origin, and ``gluing" the two manifolds together at these points of discontinuity.  When \( \theta \) reaches \( \pm\pi \), the value of \( q \) continues ``smoothly" into the left half-plane.
+	
+	\subsection{The Double Cover}
+	
+	Our paramterization has one rather unfortunate consequence; namely,
+	
+	\begin{equation}
+		q(\theta + 2\pi) = -q(\theta)
+	\end{equation}
+	
+	and therefore there are exactly \textit{two} values of \( q \) for every rotation.  In other words, we say that these planar quaternions are a \textbf{double cover} for \( \mathrm{SO(2)} \), because they ``cover" the Lie group twice.
+	
+	\subsection{Composing Rotations}
+	
+	Rotations are easily composed using planar quaternions.
+	
+	\begin{align*}
+		\theta_3 &= \theta_1 + \theta_2 \\
+		\therefore q_3 &= \begin{bmatrix}
+			\cos\left( (\theta_1 + \theta_2) / 2 \right) \\
+			\sin\left( (\theta_1 + \theta_2) / 2 \right)
+		\end{bmatrix}\\
+		\Rightarrow q_3 &= \begin{bmatrix}
+			\cos\left( (\theta_1 + \theta_2) / 2 \right) &
+			- \sin\left( (\theta_1 + \theta_2) / 2 \right) \\
+			\sin\left( (\theta_1 + \theta_2) / 2 \right) &
+			\cos\left( (\theta_1 + \theta_2) / 2 \right)
+		\end{bmatrix}
+		\begin{bmatrix}
+			1 \\
+			0
+		\end{bmatrix}
+	\end{align*}
+	
+	The quaternion \( q_3 \) is the result of composing \( q_2 \) with \( q_1 \).  We can also write
+	
+	\begin{equation}
+		q_3 = \begin{bmatrix}
+			\cos\left( \theta_2 / 2 \right) &
+			- \sin\left( \theta_2 / 2 \right) \\
+			\sin\left( \theta_2 / 2 \right) &
+			\cos\left( \theta_2 / 2 \right)
+		\end{bmatrix}
+		\begin{bmatrix}
+			\cos\left( \theta_1 / 2 \right) \\
+			\sin\left( \theta_1 / 2 \right)
+		\end{bmatrix} .
+	\end{equation}
+	
+	Using the notation \( c_1, c_2, s_1, s_2 \) for the respective cosine and sine terms of \( \theta_1, \theta_2 \), we can see this is
+	
+	\begin{equation}
+		q_3 = \begin{bmatrix}
+			c_2 c_1 - s_2 s_1 \\
+			s_2 c_1 + c_2 s_1
+		\end{bmatrix}
+	\end{equation}
+	
+	which mirrors the complex product of \( c_1 + i s_1 \) with \( c_2 + i s_2 \).  These ``planar quaternions" show a deep connection the complex numbers, echoing the original usage of ``full" (non-planar) quaternions as a 4-dimensional extension of the complex numbers.  We'll introduce the notation \( L(q) \) for the matrix encoding left-multiplication.
+	
+	\begin{equation}
+		q_3 = \begin{bmatrix}
+			\cos\left( \theta_2 / 2 \right) &
+			- \sin\left( \theta_2 / 2 \right) \\
+			\sin\left( \theta_2 / 2 \right) &
+			\cos\left( \theta_2 / 2 \right)
+		\end{bmatrix}
+		\begin{bmatrix}
+			\cos\left( \theta_1 / 2 \right) \\
+			\sin\left( \theta_1 / 2 \right)
+		\end{bmatrix}
+		\Rightarrow
+		q_3 = L(q_2) q_1
+	\end{equation}
+	
+	\subsection{Planar Quaternion Kinematics}
+	
+	Let us return to our example of integrating the output \( \omega(t) \) from a gyroscope to obtain a rotation; instead of using rotation matrices, we will use our planar quaternions for the planar case.  We have
+	
+	\begin{equation}
+		q(\theta) = \begin{bmatrix}
+			\cos\left( \theta/2 \right) \\
+			\sin\left( \theta/2 \right)
+		\end{bmatrix}
+		\Rightarrow
+		\frac{\partial q}{\partial \theta} = \begin{bmatrix}
+			-1/2 \cdot \sin\left( \theta/2 \right) \\
+			1/2 \cdot \cos\left( \theta/2 \right)
+		\end{bmatrix} .
+	\end{equation}
+	
+	Using the chain rule, we can obtain \( \dot{q} \) in terms of the angular velocity \( \omega(t) \) like so.
+	
+	\begin{equation}
+		\dot{q} = \frac{\partial q}{\partial \theta} \dot\theta = \frac{\partial q}{\partial \theta} \omega = \begin{bmatrix}
+			-1/2 \cdot \sin\left( \theta/2 \right) \\
+			1/2 \cdot \cos\left( \theta/2 \right)
+		\end{bmatrix} \omega
+	\end{equation}
+	
+	We can also write this as
+	
+	\begin{equation}
+		\dot{q} = \frac12 \begin{bmatrix}
+			\cos\left( \theta / 2 \right) &
+			- \sin\left( \theta / 2 \right) \\
+			\sin\left( \theta / 2 \right) &
+			\cos\left( \theta / 2 \right)
+		\end{bmatrix}
+		\begin{bmatrix}
+			0 \\
+			1
+		\end{bmatrix}
+		\omega .
+	\end{equation}
+	
+	We write \( H := \begin{bmatrix} 0 & 1 \end{bmatrix}^\mathrm{T} \) and use our previously defined \( L(q) \) to have
+	
+	\begin{equation}
+		\dot{q} = \frac12 L(q) H \omega .
+	\end{equation}
+	
+	The matrix \( H \) plays a very similar role to the \textit{hat map} from earlier.  Our 3D hat map converts angular velocity vectors into members of the Lie algebra \( \mathfrak{so}\mathrm{(3)} \), whereas our 2D hat map \( H \) converts angular velocity scalars into members of the Lie algebra \( \mathfrak{so}\mathrm{(2)} \).  
+	
+	For compactness, we will combine \( L(q) H \) into one matrix \( G(q) \), with two rows and one column.  The matrix \( G(q) \) will be referred to as the \textbf{attitude Jacobian} because of its relationship between the time derivative of a quaternion and a corresponding angular velocity.
+	
+	\begin{equation}
+		\boxed{\dot{q} = \frac12 G(q) \omega}
+	\end{equation}
+	
+	We recall the previous connection to complex numbers; by exponentiating a purely imaginary number, we can recover elements of \( \mathrm{SO(2)} \) (points on the unit circle in the complex plane).  This is given by Euler's formula:
+	
+	\begin{equation}
+		\exp(i\theta) = \cos(\theta) + i \sin(\theta) .
+	\end{equation}
+	
+	Elements of the Lie algebra \( \mathfrak{so}\mathrm{(2)} \) are pure imaginary numbers, which lie tangent to the unit circle at the identity (\( \theta = 0 \)).  Our example of planar quaternions mirrors this behavior, up to a factor of two.  We have introduced the factor of two now, though it is avoided in the case of complex numbers, because it is unavoidable for ``full" quaternions over \( \mathrm{SO(3)} \) for reasons beyond the scope of this course.  In the next lecture, we will see that this generalizes beautifully to ``full" quaternions.
 \end{document}
