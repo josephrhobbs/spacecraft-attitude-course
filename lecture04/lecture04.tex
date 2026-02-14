@@ -1,0 +1,259 @@
+\documentclass[12pt]{article}
+
+\usepackage{fancyhdr}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%% COURSE INFORMATION
+\newcommand{\thecourse}{MIT 16.S897}
+\newcommand{\thecoursename}{Spacecraft Attitude Determination \& Control}
+
+%% LECTURE INFORMATION
+\newcommand{\thelecture}{4}
+\newcommand{\thelecturename}{Rigid Body Dynamics \& Stability}
+\newcommand{\thelecturedate}{February 12, 2026}
+
+%% PAGE SETUP
+\pagestyle{fancy}
+\lhead{\thecourse \\ \textit{\thecoursename}}
+\rhead{Lecture \thelecture \\ \textit{\thelecturename}}
+
+\title{{\Large \thecourse} \\ \textbf{Lecture \thelecture} \\ \textsc{\thelecturename}}
+\author{Lecture by Zachary Manchester \\ Typesetting by Joseph Hobbs}
+\date{\thelecturedate}
+
+\begin{document}
+	\maketitle
+	\tableofcontents
+	
+	\section{Euler's Equation}
+	
+	Here we derive Euler's equation, which relates the kinematics and dynamics of rotating rigid bodies.  In the inertial frame, under torque-free conditions, the \textbf{angular momentum} \( h \) of a rigid body must be constant.
+	
+	\begin{equation}
+		{}^N h = {}^N J {}^N \omega
+	\end{equation}
+	
+	Note that, in general, both a rigid body's angular velocity and its moment of inertia may vary over time \textit{when expressed in the inertial frame}.  However, their product \( h \) can only be affected by external and unbalanced torques.  Using the product rule,
+	
+	\begin{equation*}
+		{}^N \tau = {}^N \dot{h} = {}^N J {}^N \dot{\omega} + {}^N \dot{J} + {}^N \omega .
+	\end{equation*}
+	
+	A rigid body's moment of inertia is constant in the body frame, but in general it may change over time \textit{in the inertial frame} as the rigid body rotates.  Unfortunately, the term \( {}^N \dot{J} \) can be very difficult to compute in practice, so we will abandon this direction.  We remember that the rotation matrix \( Q \) defines a rotation \textit{from} the body frame \textit{to} the inertial frame for an arbitrary vector \( \underline{x} \).
+	
+	\begin{equation*}
+		{}^N x = Q {}^B x {}^N \Rightarrow \dot{x} = Q {}^B \dot{x} + \dot{Q} {}^B x .
+	\end{equation*}
+	
+	We remember the expression \( \dot{Q} = Q {}^B \hat{\omega} \) and determine
+	
+	\begin{equation*}
+		\dot{x} = Q \left( {}^B \dot{x} + {}^B \hat{\omega} {}^B x \right) = Q \left( {}^B x + {}^B \omega \times {}^B x \right) .
+	\end{equation*}
+	
+	If this is true for the vector \( \underline{x} \) in general, then it must hold for the vector \( \underline{h} \), the angular momentum of an arbitrary rigid body.
+	
+	\begin{equation*}
+		{}^N \tau = Q \left( {}^B \dot{h} + {}^B \omega \times {}^B h \right)
+	\end{equation*}
+	
+	Multiplying each side by \( Q^\mathrm{T} \) to convert the torque vector into body-frame coordinates, and dropping the \( B \) superscripts, we obtain the vector relation
+	
+	\begin{equation*}
+		\tau = \dot{h} + \omega \times h .
+	\end{equation*}
+	
+	This relationship is more commonly written in terms of the angular velocity \( \omega \) exclusively.
+	
+	\begin{equation}
+		\boxed{ \tau = J \dot{\omega} + \omega \times \left( J \omega \right) }
+	\end{equation}
+	
+	This relationship is called \textbf{Euler's equation} for rigid-body dynamics.  It is important to remember that the equation is \textit{entirely in terms of body-frame vectors}.  If the body frame is chosen such that its basis vectors align with the body's principal axes, then \( J \) is diagonal and this decouples into
+	
+	\begin{align}
+		\tau_1 &= J_{11} \dot{\omega}_1 + \left( J_{33} - J_{22} \right) \omega_2 \omega_3 , \\
+		\tau_2 &= J_{22} \dot{\omega}_2 + \left( J_{11} - J_{33} \right) \omega_1 \omega_3 , \\
+		\tau_3 &= J_{33} \dot{\omega}_3 + \left( J_{22} - J_{11} \right) \omega_1 \omega_2 .
+	\end{align}
+	
+	These three equations are sometimes called \textbf{Euler's equations} (in the plural sense).  They are easy to derive from the vector equation assuming a diagonal \( J \).  When written in this form, it is typically assumed that
+	
+	\begin{equation*}
+		J_{11} \le J_{22} \le J_{33} .
+	\end{equation*}
+	
+	The axis corresponding to \( J_{11} \) is called the \textbf{minor axis}, the axis corresponding to \( J_{22} \) is called the \textbf{intermediate axis}, and the axis corresponding to \( J_{33} \) is called the \textbf{major axis}.
+	
+	\section{Equilibria of Rigid Bodies}
+
+	To determine the fixed points of Euler's equation in torque-free conditions, we will write it again in terms of \( h \) exclusively.
+	
+	\begin{equation*}
+		\dot{h} + \left( J^{-1} h \right) \times h = 0
+	\end{equation*}
+	
+	Rearranging, we have
+	
+	\begin{equation*}
+		\dot{h} = h \times \left( J^{-1} h \right) .
+	\end{equation*}
+	
+	Fixed points of Euler's equation will occur when \( \dot{h} = 0 \), which is true when \( h \) is parallel (or antiparallel) to \( J^{-1} h \).  In other words,
+	
+	\begin{equation}
+		h \times \left( J^{-1} h \right) = 0 \Rightarrow \lambda h = J^{-1} h
+	\end{equation}
+	
+	for a constant \( \lambda \), which can only occur when \( h \) is an eigenvector of \( J \) and is therefore aligned with a principal axis of the rigid body in question.  This gives a total of \textbf{six equilibrium states} for a given rigid body---each rigid body has three principal axes, and the rigid body may rotate about each axis either clockwise or counterclockwise.  (Note that, for a spherically symmetric rigid body, the matrix \( J \) is proportional to the identity and every direction is a principal axis.  In this special case, there are in fact infinitely many equilibria.)
+	
+	\section{Stability of Rigid-Body Equilibria}
+	
+	To characterize the stability of the six rigid-body equilibria, we will linearize Euler's equation about each principal axis in turn.
+	
+	\subsection{Minor Axis Stability}
+	
+	We will assume that a rigid body is rotating without torque about its minor axis with constant angular velocity \( \omega_1 = \omega_0 \).  We will also assume that \( \omega_0 \gg \omega_2, \omega_3 \).  Taking Euler's equations in the principal axes,
+	
+	\begin{align*}
+		0 &= J_{11} \dot{\omega}_1 + \left( J_{33} - J_{22} \right) \omega_2 \omega_3 , \\
+		0 &= J_{22} \dot{\omega}_2 + \left( J_{11} - J_{33} \right) \omega_1 \omega_3 , \\
+		0 &= J_{33} \dot{\omega}_3 + \left( J_{22} - J_{11} \right) \omega_1 \omega_2 ,
+	\end{align*}
+	
+	we can eliminate the first equation, because we assume very small perturbations in \( \omega_2, \omega_3 \) and therefore consider their product to be negligible.
+	
+	\begin{align*}
+		\dot{\omega}_2 &= \left( \frac{ J_{33} - J_{11} }{J_{22}} \right) \omega_0 \omega_3 \\
+		\dot{\omega}_3 &= \left( \frac{ J_{11} - J_{22} }{J_{33}} \right) \omega_0 \omega_2
+	\end{align*}
+	
+	These coupled differential equations can be written as the linear ODE
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			\dot{\omega}_2 \\
+			\dot{\omega}_3
+		\end{bmatrix}
+		=
+		\begin{bmatrix}
+			0 & \frac{ J_{33} - J_{11} }{J_{22}} \omega_0 \\
+			\frac{ J_{11} - J_{22} }{J_{33}} \omega_0 & 0 
+		\end{bmatrix}
+		\begin{bmatrix}
+			\omega_2 \\
+			\omega_3
+		\end{bmatrix} .
+	\end{equation*}
+	
+	For a linear homogeneous ODE \( \dot{x} = A x \) to be stable, \( A \) must not have any eigenvalues with positive real part.  The eigenvalues of the matrix are
+	
+	\begin{equation}
+		\lambda = \pm\sqrt{ \frac{ J_{33} - J_{11} }{J_{22}} \cdot \frac{ J_{11} - J_{22} }{J_{33}} \cdot \omega_0^2 } .
+	\end{equation}
+	
+	Because \( J_{33} \ge J_{22} \) and \( J_{11} \le J_{22} \), the argument of the square root must be nonpositive, and the eigenvalues must be imaginary (zero real part).  This suggests that rotation about the minor axis is \textbf{marginally stable} (for those familiar with Lyapunov analysis, stable \textit{in the sense of Lyapunov}, but not asymptotically stable).
+	
+	\subsection{Major Axis Stability}
+	
+	This exercise can be repeated with rotation about the major axis; we take \( \omega_3 = \omega_0 \) and the other two velocities to be very small.  This gives us the ODE
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			\dot{\omega}_1 \\
+			\dot{\omega}_2
+		\end{bmatrix}
+		=
+		\begin{bmatrix}
+			0 & \frac{ J_{22} - J_{33} }{J_{11}} \omega_0 \\
+			\frac{ J_{33} - J_{11} }{J_{22}} \omega_0 & 0 
+		\end{bmatrix}
+		\begin{bmatrix}
+			\omega_1 \\
+			\omega_2
+		\end{bmatrix} .
+	\end{equation*}
+	
+	Again, the eigenvalues of this matrix are
+	
+	\begin{equation}
+		\lambda = \pm\sqrt{ \frac{ J_{22} - J_{33} }{J_{11}} \cdot \frac{ J_{33} - J_{11} }{J_{22}} \cdot \omega_0^2 }
+	\end{equation}
+	
+	and because the argument of the radical must be nonpositive, guaranteeing \textbf{marginally stable} dynamics (again, stable in the sense of Lyapunov, but not asymptotically stable).
+	
+	\subsection{Intermediate Axis Stability}
+	
+	We repeat the exercise one final time with rotation about the intermediate axis.  THe linear ODE
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			\dot{\omega}_1 \\
+			\dot{\omega}_3
+		\end{bmatrix}
+		=
+		\begin{bmatrix}
+			0 & \frac{ J_{22} - J_{33} }{J_{11}} \omega_0 \\
+			\frac{ J_{11} - J_{22} }{J_{33}} \omega_0 & 0 
+		\end{bmatrix}
+		\begin{bmatrix}
+			\omega_1 \\
+			\omega_3
+		\end{bmatrix} .
+	\end{equation*}
+	
+	gives the eigenvalues
+	
+	\begin{equation}
+		\lambda = \pm\sqrt{ \frac{ J_{22} - J_{33} }{J_{11}} \cdot \frac{ J_{11} - J_{22} }{J_{33}} \cdot \omega_0^2 } .
+	\end{equation}
+	
+	The argument of the radical here must be nonnegative, and in general, unless \( J_{11} = J_{22} = J_{33} \) and the body is spherically symmetric, the argument must be strictly positive.  This means that there will be one eigenvalue with positive real part, and the rotation is \textbf{unstable}.  Small perturbations in \( \omega_1 \) or \( \omega_3 \) will grow rapidly, causing the object to enter a tumble.
+	
+	\section{Solutions and the Momentum Sphere}
+	
+	\subsection{Analytic and Numerical Solutions}
+	
+	In the absence of torques, Euler's equation in fact does have an analytic solution, but it is in terms of \textbf{Jacobi elliptic functions}, which are difficult to use in practice.  Furthermore, with the addition of control effort or other unbalanced torques, Euler's equation loses analytic solutions.  For this reason, numerical integration such as the \textbf{Runge-Kutta method} are used.
+	
+	\subsection{The Momentum Sphere}
+	
+	In torque-free rotation, great insight can be derived simply from the basic properties of a rigid body.  In the body frame, the magnitude of the angular momentum vector must be preserved (\( \left\Vert h \right\Vert \) is constant) though the vector's direction changes as the body rotates.  Furthermore, kinetic energy, \( T = \frac12 \omega^\mathrm{T} J \omega \) must be preserved.  In momentum phase space, the conservation of angular momentum requires momentum vectors to lie on a sphere with radius \( \left\Vert h \right\Vert \).  Furthermore, the kinetic energy \( T \), better written as
+	
+	\begin{equation}
+		T = \frac12 \omega^\mathrm{T} J \omega = \frac12 h^\mathrm{T} J^{-1} h
+	\end{equation}
+	
+	must lie on an ellipsoid defined by \( J^{-1} \).  Because of this, the trajectory of the vector \( h \) through phase space (and therefore the evolution of the body's angular momentum vector) must follow intersections between the \textbf{momentum sphere} and the \textbf{energy ellipsoid}.
+	
+	\subsection{Separatrices and Flat-Spin Recovery}
+	
+	During rotation about the minor and major axes, the sphere and ellipsoid are tangent at exactly two antipodal points---these are the four stable equilibria previously discussed.  During rotation about the intermediate axis, the sphere and ellipsoid intersect along two great circles of the sphere.  Each of these great circles is called a \textbf{separatrix} (pl. \textit{separatrices}) and delineate four regions of stable rotation.  Trajectories near a separatrix will enter a tumble, following the separatrix close to the intermediate-axis rotation before they are thrown again from the unstable equilibrium.
+	
+	The control problem of \textbf{flat-spin recovery} involves applying torques to a rigid body in a major-axis spin (about the axis corresponding to \( J_{11} \)) to recover a minor-axis spin (about the axis corresponding to \( J_{33} \)).  Any such trajectory between these two states must cross one of the two separatrices.  This must be done with extreme care to ensure the rigid body does not enter a tumble. 
+	
+	\section{Energy Dissipation}
+	
+	For a constant magnitude of angular momentum \( \left\Vert h \right\Vert \), the rotational kinetic energy \( T \) may take values
+	
+	\begin{equation}
+		\frac{1}{2 J_{33}} \left\Vert h \right\Vert^2 \le T \le \frac{1}{2 J_{11}} \left\Vert h \right\Vert^2 .
+	\end{equation}
+	
+	It is easy to see this considering the equation \( T = \frac12 h^\mathrm{T} J^{-1} h \).  The inverse of the moment of inertia, in principal axes, takes the form
+	
+	\begin{equation*}
+		J^{-1} = \begin{bmatrix}
+			1/J_{11} & 0 & 0 \\
+			0 & 1/J_{22} & 0 \\
+			0 & 0 & 1/J_{33} \\
+		\end{bmatrix} .
+	\end{equation*}
+	
+	Kinetic energy is \textit{not conserved} when energy is permitted to dissipate through means such as fluid slosh, damping in structural modes, or electromagnetic eddy current interactions.  Because \( J_{11} \le J_{33} \), in the case of non-negligible energy dissipation, the minor-axis spin becomes unstable.  This is because, with equal \( \left\Vert h \right\Vert \), a minor-axis spin has higher kinetic energy than a major-axis spin, and as the rigid body loses kinetic energy, the stable minor-axis spin is no longer accessible.
+	
+	The United States space program discovered this the hard way in 1958, upon the launch of the first United States satellite, the \textbf{Explorer 1}.  Explorer 1 was designed to maintain a stable attitude by rotation about its minor axis.  However, the structural modes excited in its flexible antennas caused damping and energy dissipation.  As Explorer 1 lost rotational kinetic energy, the major-axis spin became the only stable configuration, and the spacecraft irrecoverably entered a ``flat spin."
+\end{document}

@@ -16,7 +16,9 @@ The lecture notes cover the following topics.
 
 - `lecture02`: rotation matrix kinematics, quaternions
 
-- `lecture03`: quaternions, quaternion kinematics, rigid-body mechanics
+- `lecture03`: quaternions, quaternion kinematics, rigid-body dynamics
+
+- `lecture04`: rigid-body dynamics, Euler's equation, stability of solutions
 
 ## Errors
 
