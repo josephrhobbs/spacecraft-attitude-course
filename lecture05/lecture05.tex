@@ -1,0 +1,226 @@
+\documentclass[12pt]{article}
+
+\usepackage{fancyhdr}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%% COURSE INFORMATION
+\newcommand{\thecourse}{MIT 16.S897}
+\newcommand{\thecoursename}{Spacecraft Attitude Determination \& Control}
+
+%% LECTURE INFORMATION
+\newcommand{\thelecture}{5}
+\newcommand{\thelecturename}{Damping \& Gyrostats}
+\newcommand{\thelecturedate}{February 19, 2026}
+
+%% PAGE SETUP
+\pagestyle{fancy}
+\lhead{\thecourse \\ \textit{\thecoursename}}
+\rhead{Lecture \thelecture \\ \textit{\thelecturename}}
+
+\title{{\Large \thecourse} \\ \textbf{Lecture \thelecture} \\ \textsc{\thelecturename}}
+\author{Lecture by Zachary Manchester \\ Typesetting by Joseph Hobbs}
+\date{\thelecturedate}
+
+\begin{document}
+	\maketitle
+	\tableofcontents
+	
+	\section{Kane Dampers}
+	
+	Until this point in the course, we have studied the rotation of rigid bodies without considering energy dissipation.  However, mechanisms like fluid slosh and excitation of structural modes can result in the dissipation of mechanical energy and \textbf{damping}.  A common and very simple conceptual model of damping is the \textbf{Kane damper}.
+	
+	\subsection{Torque by Kane Damper}
+	
+	We might imagine a Kane damper as a solid sphere suspended in a viscous fluid (such as oil) inside a rigid body.  As the rigid body rotates, viscous forces transfer torque between the rigid body and the internal damper, and the viscous effects dissipate mechanical energy as heat.  Mathematically, we model the torque applied \textit{by} a Kane damper \textit{on} the rigid body as
+	
+	\begin{equation}
+		{}^B \tau_d = c_d \left( {}^B \omega_d - {}^B \omega \right)
+	\end{equation}
+	
+	where \( \omega_d \) is the angular velocity of the damper and \( c_d \) is a non-negative \textbf{coefficient of damping}, determined by the properties of the viscous fluid.  It is important to note that, because torque is transferred between the damper and the rigid body, the sum of their angular momenta must be conserved.
+	
+	\subsection{Kane Damper Dynamics}
+	
+	Here, we derive the dynamics of a Kane damper by considering the effect of the torque (described above) on the damper's and rigid body's angular momenta.  The angular momentum of the damper is given by
+	
+	\begin{align*}
+		{}^N h_d &= Q {}^B h_d \\
+		\Rightarrow {}^N \dot{h}_d &= \dot{Q} {}^B h_d + Q {}^B \dot{h}_d \\
+		&= Q \hat{\omega} {}^B h_d + Q {}^B \dot{h}_d = - {}^N \tau_d .
+	\end{align*}
+	
+	We equate this to the negative of the damping torque because we defined torque to be \textit{by} the damper \textit{on} the rigid body.  We can left-multiply both sides by \( Q^\mathrm{T} \) to achieve an expression entirely in the body frame.  For convenience, we drop the left superscripts.
+	
+	\begin{equation*}
+		\dot{h}_d = \omega \times h_d + Q \dot{h}_d = -\tau_d
+	\end{equation*}
+	
+	Finally, by substituting \( h_d = J_d \omega_d \), and recalling Euler's equation for rigid bodies, we obtain
+	
+	\begin{align}
+		J \dot{\omega} + \omega \times J\omega &= c_d \left( \omega_d - \omega \right) + \tau \\
+		J_d \dot{\omega}_d + \omega_d \times J_d \omega_d &= c_d \left( \omega - \omega_d \right)
+	\end{align}
+	
+	where \( \tau \) represents torque applied externally to the rigid body.  These two equations are \textbf{Euler's equations for damped rigid bodies}.  They can be integrated numerically to simulate, for example, the behavior of a satellite with damped dynamics.  Because the damper is modeled as a sphere, \( J_d \) should be a multiple of the identity matrix (\( J_d = \kappa I \)).  Because the Kane damper model only has two independent parameters (\( \kappa, c_d \)), it is easy to fit this model to existing spacecraft telemetry data using the least-squares method.
+	
+	\section{Gyrostats}
+	
+	A \textbf{gyrostat} is a system of rigid bodies in which relative motion of the bodies does not change the total inertia of the system.  For example, a spacecraft with a Kane damper is a gyrostat, because as the damper rotates within the spacecraft, the total inertia of the system remains unchanged.  Generally, we might imagine a ``box" (of arbitrary shape) containing one or more cylindrical rotors inside.  As the rotors rotate along their symmetry axis, the inertia of the system remains constant.  Gyrostat dynamics are extremely useful for modeling the behavior of spacecraft with reaction wheels or other momentum actuators---by controlling the applied torque on the rotors inside a gyrostatic system, we can point, perform slew maneuvers, and stabilize the system's attitude.  The total body-frame angular momentum of a gyrostatic system is given by
+	
+	\begin{equation}
+		{}^B h = J {}^B \omega + {}^B \rho
+	\end{equation}
+	
+	where \( \rho \) is the rotor angular momentum and \( J \) is the inertia of the \textit{entire system}, including all rotors, about the system's center of mass.  When computing \( J \), it is convenient to imagine ``locking out" the rotors so that they are not free to spin.  Because of this, \( \rho \) represents only the angular momentum caused by \textit{rotor motion relative to the rigid body}.  The angular momentum and its derivative in the inertial frame yield
+	
+	\begin{align*}
+		{}^N h &= Q \left( J {}^B \omega + {}^B \rho \right) \\
+		{}^N \dot{h} &= Q \left( {}^N \dot{h} + \omega \times {}^B h \right) = {}^N \tau \\
+		\Rightarrow {}^B \tau &= {}^B \dot{h} + \omega \times {}^B h .
+	\end{align*}
+	
+	Substituting the expression for gyrostat angular momentum and dropping left superscripts, we get
+	
+	\begin{equation}
+		\boxed{J \dot{\omega} + \dot{\rho} + \omega \times \left( J \omega + \rho \right) = \tau} .
+	\end{equation}
+	
+	We call this the \textbf{gyrostat equation}, as it describes the dynamics of a gyrostat in terms of external torques \( \tau \) and internal torques \( \dot{\rho} \).
+	
+	\section{Superspin}
+	
+	Gyrostatic motion suggests something we previously were unable to achieve---what if we want stability while rotating about an intermediate axis?  Or, in the presence of energy dissipation, what if we want stability while rotating about the minor axis?  Using gyrostat dynamics, we can achieve \textbf{superspin}, a stable rotation about a typically unstable axis of rotation.  Assuming that rotor speeds are fixed (\( \dot\rho = 0 \)), we can derive an ODE linearized about an intermediate-axis rotation.
+	
+	\begin{equation}
+		\begin{bmatrix}
+			\dot{\omega}_1 \\
+			\dot{\omega}_3
+		\end{bmatrix}
+		=
+		\begin{bmatrix}
+			0 & \omega_0 (J_{22} - J_{33}) / J_{11} + \rho_2 / J_{11} \\
+			\omega_0 (J_{11} - J_{22}) / J_{33} - \rho_2 / J_{33} & 0 \\
+		\end{bmatrix}
+		\begin{bmatrix}
+			\omega_1 \\
+			\omega_3
+		\end{bmatrix}
+	\end{equation}
+	
+	From the lecture on intermediate-axis instability, we know that the two non-zero elements of this matrix must have different signs to guarantee marginal stability (for those familiar with Lyapunov analysis, stability \textit{in the sense of Lyapunov}).  Rearranging, we have
+	
+	\begin{align*}
+		J_{11} - \left( J_{22} + \frac{\rho_2}{\omega_0} \right) &< 0 \\
+		\left( J_{22} + \frac{\rho_2}{\omega_0} \right) - J_{33} &> 0
+	\end{align*}
+	
+	Because \( J_{22} \ge J_{11} \), the only condition that we need to worry about is
+	
+	\begin{equation*}
+		J_{22} + \frac{\rho_2}{\omega_0} > J_{33}
+	\end{equation*}
+	
+	for marginal stability.  A good engineering rule of thumb states that a margin of approximately \( 20\% \) in this inequality is desirable.  We will write this as
+	
+	\begin{equation}
+		J_{22} + \frac{\rho_2}{\omega_0} = \eta J_{33}
+	\end{equation}
+	
+	for suitable \( \eta > 1 \).  We can repeat this derivation about the minor axis to determine a similar result.
+	
+	\section{Dynamic Balance}
+	
+	Superspin enables us to stabilize the rotation of a rigid body around a typically unstable principal axis.  But what if we want to rotate in a stable manner about a non-principal axis?  The more general principle of \textbf{dynamic balance} allows us to use gyrostatic dynamics to stabilize such a rotation.  Recalling the gyrostat equation
+	
+	\begin{equation*}
+		J \dot{\omega} + \dot{\rho} + \omega \times \left( J \omega + \rho \right) = \tau
+	\end{equation*}
+	
+	we see that, in the absence of external torque or reaction wheel torque (\( \tau = \dot\rho = 0 \)), we must have
+	
+	\begin{equation*}
+		J \dot{\omega} + \omega \times \left( J \omega + \rho \right) = 0 .
+	\end{equation*}
+	
+	Because we want our selected axis to be a \textit{fixed point} of the gyrostat's dynamics, we enforce \( \dot\omega = 0 \).  This yields the \textbf{no-wobble condition} for dynamic balance.
+	
+	\begin{equation}
+		\omega \times \left( J \omega + \rho \right) = 0
+	\end{equation}
+	
+	However, we cannot select a \( \rho \) from this alone, because infinite solutions to this expression exist.  We therefore add the superspin condition to ensure that a unique solution exists.  Suppose that we select a desired angular velocity vector \( \omega^\star = \omega_s \phi \), where \( \phi \) is the unit vector pointing along the desired axis of rotation (according to the right-hand rule).  The scalar component of \( J \) along this axis is
+	
+	\begin{equation*}
+		J_s = \phi^\mathrm{T} J \phi
+	\end{equation*}
+	
+	and, by the superspin condition, we must have
+	
+	\begin{equation*}
+		J_s + \frac{\rho_s}{\omega_s} = \eta J_{33}
+	\end{equation*}
+	
+	where \( \rho_s \) is the component of rotor angular momentum in the direction of \( \phi \).  This tells us that \( \rho_s \) should be
+	
+	\begin{equation}
+		\rho_s = \omega_s \left( \eta J_{33} - \phi^\mathrm{T} J \phi \right)
+	\end{equation}
+	
+	This is the \textbf{superspin condition for dynamic balance}, and it ensures \textit{stable} rotation about the desired axis.  Composing the no-wobble and superspin conditions, we get
+	
+	\begin{equation}
+		\begin{bmatrix}
+			\phi^\mathrm{T} \\
+			\hat{\omega}
+		\end{bmatrix}
+		\rho
+		=
+		\begin{bmatrix}
+			\omega_s \left( \eta J_{33} - \phi^\mathrm{T} J \phi \right) \\
+			-\omega \times J\omega
+		\end{bmatrix} .
+	\end{equation}
+	
+	Though this linear system represents four equations, it is guaranteed to have a rank of three, so one unique solution exists.  We can determine the solution using the \textbf{Moore-Penrose pseudoinverse}
+	
+	\begin{equation*}
+		A^+ = \left( A^\mathrm{T} A \right)^{-1} A^\mathrm{T} .
+	\end{equation*}
+	
+	The ``traditional" matrix inverse is only defined for square matrices, but the Moore-Penrose pseudoinverse is always defined.  Functions computing the Moore-Penrose pseudoinverse are widely available in various computational toolboxes (including Python and MATLAB).  Using this, we determine the unique solution for \( \rho \) as
+	
+	\begin{equation}
+		\boxed{
+		\rho = \left(
+		\begin{bmatrix}
+			\phi & \hat{\omega}^\mathrm{T}
+		\end{bmatrix}
+		\begin{bmatrix}
+			\phi^\mathrm{T} \\
+			\hat{\omega}
+		\end{bmatrix}
+		\right)^{-1}
+		\begin{bmatrix}
+			\phi & \hat{\omega}^T
+		\end{bmatrix}
+		\begin{bmatrix}
+			\omega_s \left( \eta J_{33} - \phi^\mathrm{T} J \phi \right) \\
+			-\omega \times J\omega
+		\end{bmatrix}
+		}
+	\end{equation}
+	
+	Dynamic balance and superspin are particularly useful in contemporary spacecraft engineering.  For example, when conducting an orbit-raising maneuver, it is important to stabilize a spacecraft's rotation about its thruster axis.  This ``averages out" pointing error and ensures that true impulse is as close as possible to the desired impulse.  Dynamic balance can ensure that the spacecraft's rotation about its thruster axis is stable, even if the thruster axis does not align with a principal axis.
+	
+	\section{Wobble and Nutation}
+	
+	In the dynamics of gyrostatic systems, two terms are commonly used to describe similar but distinct phenomena: \textbf{wobble} and \textbf{nutation}.  Here, we provide clear definitions and examples of each, to minimize potential confusion in later lectures.
+	
+	\paragraph{Wobble} The conical motion of a vector about an axis of rotation due to misalignment between body axes and principal axes.  For example, a thrust vector might trace out a cone as a spacecraft rotates about its minor axis.  This happens when a spacecraft's minor axis is not quite aligned with the thrust vector, even in the absence of nutation.
+	
+	\paragraph{Nutation} Oscillatory motion occuring in the off-axis components of angular velocity.  Nutation occurs when an object rotates about a non-principal axis.  For example, as an object rotates about its major axis, small perturbations in minor-axis and intermediate-axis angular velocities result in stable oscillations about pure major-axis rotation.
+\end{document}
