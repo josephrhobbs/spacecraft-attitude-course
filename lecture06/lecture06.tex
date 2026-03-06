@@ -1,0 +1,218 @@
+\documentclass[12pt]{article}
+
+\usepackage{fancyhdr}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%% COURSE INFORMATION
+\newcommand{\thecourse}{MIT 16.S897}
+\newcommand{\thecoursename}{Spacecraft Attitude Determination \& Control}
+
+%% LECTURE INFORMATION
+\newcommand{\thelecture}{6}
+\newcommand{\thelecturename}{Attitude Sensors \& Estimation Intro}
+\newcommand{\thelecturedate}{February 26, 2026}
+
+%% PAGE SETUP
+\pagestyle{fancy}
+\lhead{\thecourse \\ \textit{\thecoursename}}
+\rhead{Lecture \thelecture \\ \textit{\thelecturename}}
+
+\title{{\Large \thecourse} \\ \textbf{Lecture \thelecture} \\ \textsc{\thelecturename}}
+\author{Lecture by Zachary Manchester \\ Typesetting by Joseph Hobbs}
+\date{\thelecturedate}
+
+\begin{document}
+	\maketitle
+	\tableofcontents
+	
+	\section{Attitude Sensors}
+	
+	A critical problem in ADCS engineering is \textbf{attitude estimation}.  The attitude estimation problem is: given data from on-board sensors, how can a spacecraft determine its attitude?  We discuss here a variety of sensors used in attitude estimation, and in later sections we introduce algorithms for using raw data to estimate attitude.
+	
+	\paragraph{Star Trackers} Star trackers use cameras to image the star field visible from the spacecraft.  Machine vision algorithms can then match star images to existing star maps.  Star trackers work anywhere, but they are expensive and subject to motion blur.  At slow slew rates (less than 10 degrees per second) they can provide arcsecond-level accuracy.
+	
+	\paragraph{Sun Sensors} Sun sensors determine the direction to the sun.  These sensors only work when the sun is visible---not when the spacecraft is in eclipse behind the Earth or Moon.  They are very simple and cheap, but provide a lower accuracy on the order of one degree.
+	
+	\paragraph{Magnetometers} Magnetometers can use known orbital position to match the detected magnetic field to a known map of the Earth's magnetic field.  These only work in LEO when the magnetic field is strong.  They are also highly sensitive to electromagnetic interference from spacecraft electronics and provide a low accuracy on the order of one degree.
+	
+	\paragraph{Horizon Sensors} Horizon sensors use multiple measurements of the Earth's horizon to determine the \textbf{nadir vector}---the unit vector pointing towards the center of the Earth.  These only work in LEO and provide a moderate level of precision (on the order of one tenth of one degree).
+	
+	\paragraph{Gyroscopes} Gyroscopes measure angular rates.  These readings can be integrated numerically to obtain attitude.  Cost and accuracy vary widely from low-accuracy ``penny" sensors to extremely accurate gyroscopes with a unit cost in the tens of thousands of U.S. dollars.
+	
+	\paragraph{Global Positioning System} Three or more GPS antennas and a \textit{carrier-differential GPS receiver} can be used to compute spacecraft attitude.  By finding the precise location of each antenna in space, the spacecraft computer can determine the attitude of the spacecraft.  This method has moderate precision (again, on the order of one tenth of one degree).
+	
+	\section{TRIAD}
+	
+	The first attitude estimation method was the \textsc{Triad} algorithm, developed for the \textbf{Transit program} in the early 1960s.  Transit was the first successful navigation satellite, developed for the U.S. Navy after two physicists determined that they could use the Doppler shift to accurately determine the orbit of the Sputnik satellite.  The Transit constellation served as a precursor to the modern \textbf{Global Positioning System} (GPS), preceding it by about 30 years.
+	
+	\textsc{Triad} is also the simplest possible attitude estimation algorithm.  Two \textit{linearly independent} vector measurements constitute the bare minimum for attitude estimation.  We denote these measurements \( {}^N r_1, {}^N r_2 \) in the inertial frame and \( {}^B r_1, {}^B r_2 \) in the body frame.  To estimate the rotation matrix \( Q \), we write the linear system
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			{}^N r_1 & {}^N r_2
+		\end{bmatrix}
+		=
+		Q
+		\begin{bmatrix}
+			{}^B r_1 & {}^B r_2
+		\end{bmatrix} .
+	\end{equation*}
+	
+	Unfortunately, we cannot readily obtain \( Q \) because it is right-multiplied by a non-square matrix.  However, the vector \( r_1 \times r_2 \) is orthogonal (thus linearly independent) to both \( r_1 \) and \( r_2 \), so by computing this product, we can obtain a ``square" linear system.
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			{}^N r_1 & {}^N r_2 & {}^N r_1 \times {}^N r_2
+		\end{bmatrix}
+		=
+		Q
+		\begin{bmatrix}
+			{}^B r_1 & {}^B r_2 & {}^B r_1 \times {}^B r_2 
+		\end{bmatrix} .
+	\end{equation*}
+	
+	We term these matrices \( {}^N R \) and \( {}^B R \), respectively, and solve to obtain
+	
+	\begin{equation}
+		\boxed{ Q = {}^N R {}^B R^{-1} } .
+	\end{equation}
+	
+	This method only works when \( {}^B R \) is non-singular.  When the \textbf{condition number} (ratio of maximum and minimum singular values) of \( {}^B R \) is much greater than one, then the matrix is ``almost" non-invertible, and significant floating-point precision will be lost.
+	
+	This algorithm, however, does not accurately reflect how the Transit satellites actually computed their attitude.  Matrix inversion is a relatively intensive operation, and computational hardware on the Transit satellites were extremely limited.  Therefore, the original developers of \textsc{Triad} actually made a small modification to the algorithm, preserving the final answer while reducing computation.  This involved constructing two \textit{orthogonal} matrices, which are easier to invert (to an orthogonal matrix, inverse and transpose are identical operations).
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			{}^N r_1 & \frac{{}^N r_1 \times {}^N r_2}{\left\Vert {}^N r_1 \times {}^N r_2 \right\Vert_2} & \frac{{}^N r_1 \times \left( {}^N r_1 \times {}^N r_2 \right)}{\left\Vert {}^N r_1 \times \left( {}^N r_1 \times {}^N r_2 \right) \right\Vert_2}
+		\end{bmatrix}
+		=
+		Q
+		\begin{bmatrix}
+			{}^B r_1 & \frac{{}^B r_1 \times {}^B r_2}{\left\Vert {}^B r_1 \times {}^B r_2 \right\Vert_2} & \frac{{}^B r_1 \times \left( {}^B r_1 \times {}^B r_2 \right)}{\left\Vert {}^B r_1 \times \left( {}^B r_1 \times {}^B r_2 \right) \right\Vert_2}
+		\end{bmatrix}
+	\end{equation*}
+	
+	Because the columns of these matrices are orthogonal, we can write
+	
+	\begin{equation}
+		{}^N T = Q {}^B T \Rightarrow \boxed{ Q = {}^N T {}^B T^\mathrm{T} } .
+	\end{equation}
+	
+	We replace the matrix inversion in the original algorithm with four cross products and appropriate normalizations, reducing computational overhead.  This formulation is the traditional \textsc{Triad} method for attitude estimation.
+	
+	\section{Wahba's Problem}
+	
+	In 1964, the statistician Grace Wahba proposed \textbf{Wahba's problem} to the larger statistics and estimation community.  In subsequent years, a half-dozen solutions emerged to the problem, opening the doors to future applications in attitude estimation.  Wahba's problem involves determining a least-squares (maximum likelihood) estimation for a rotation matrix \( Q \) given \( n \) corresponding measurements \( {}^N r_k \) and \( {}^B r_k \).
+	
+	\subsection{Problem Statement}
+	
+	We define Wahba's problem as follows.
+	
+	\begin{equation}
+		\min_{Q \in \mathrm{SO(3)}} c(Q) := \sum_{k=1}^n w_k \left\Vert {}^N r_k - Q {}^B r_k \right\Vert_2^2
+	\end{equation}
+	
+	Here, \( w_k \) are non-negative weights for each measurement.  For proper maximum likelihood estimation, these should be inversely proportional to the noise variance of the corresponding sensor.
+	
+	\subsection{Solution Methods}
+	
+	In this course, we will discuss four methods for Wahba's problem.
+	
+	\begin{enumerate}
+		\item Convex relaxation,
+		\item Singular value decomposition,
+		\item Davenport's \( q \)-method, and
+		\item Newton's method.
+	\end{enumerate}
+	
+	The convex relaxation approach is the most recent, and is strongly reminiscent of contemporary methods in optimal control for aerospace applications.  The \( q \)-method and the SVD method are both more established and reflect original solutions to Wahba's problem.  Newton's method is less commonly used, but showcases a deep connection between Wahba's problem and the Kalman filter, which we will discuss in future lectures.
+	
+	\subsection{Reformulating Wahba's Problem}
+	
+	Before we discuss any solution method, we will reformulate Wahba's problem by algebraic manipulation.  Given the cost function
+	
+	\begin{equation*}
+		c(Q) := \sum_{k=1}^n w_k \left\Vert {}^N r_k - Q {}^B r_k \right\Vert_2^2 ,
+	\end{equation*}
+	
+	we can rearrange terms to make it linear in the rotation matrix \( Q \).
+	
+	\begin{align*}
+		c(Q) &= \sum_{k=1}^n w_k \left( {}^N r_k - Q {}^B r_k \right)^\mathrm{T} \left( {}^N r_k - Q {}^B r_k \right) \\
+		&= \sum_{k=1}^n w_k \left( {}^N r_k^\mathrm{T} {}^N r_k - 2 {}^N r_k^\mathrm{T} Q {}^B r_k + {}^B r_k^\mathrm{T} Q^\mathrm{T} Q {}^B r_k \right)
+	\end{align*}
+	
+	Because \( Q^\mathrm{T} Q = I \), we can eliminate the quadratic term.
+	
+	\begin{align*}
+		c(Q) &= \sum_{k=1}^n w_k \left( {}^N r_k^\mathrm{T} {}^N r_k - 2 {}^N r_k^\mathrm{T} Q {}^B r_k + {}^B r_k^\mathrm{T} {}^B r_k \right) \\
+		&= \sum_{k=1}^n w_k \left( b_k - 2 {}^N r_k^\mathrm{T} Q {}^B r_k \right)
+	\end{align*}
+	
+	Here, \( b_k \) is the constant term in each summand.  Removing the constant term, we define a new loss function \( c^\prime(Q) \) that admits the same optimal solution as \( c(Q) \).
+	
+	\begin{equation}
+		c^\prime(Q) = -2 \sum_{k=1}^n w_k {}^N r_k^\mathrm{T} Q {}^B r_k
+	\end{equation}
+	
+	We have one final trick up our sleeve.  The \textbf{trace} of a matrix \( \mathrm{tr}(A) \) is defined as the sum of its diagonal elements.  We leave as an exercise to the reader to prove the convenient property
+	
+	\begin{equation*}
+		x^\mathrm{T} A y = \mathrm{tr}(A y x^\mathrm{T}) = \mathrm{tr}(y x^\mathrm{T} A) .
+	\end{equation*}
+	
+	Though this, we see that the trace acts as an elegant ``bridge" between the inner product or quadratic form and the outer (or \textit{dyadic}) product.  Using this ``trace trick", we can rewrite \( c^\prime \) as
+	
+	\begin{equation*}
+		c^\prime(Q) = -2 \sum_{k=1}^n \mathrm{tr}\left( w_k Q {}^B r_k {}^N r_k^\mathrm{T} \right) = -2 \, \mathrm{tr}\left( \left[ \sum_{k=1}^n w_k {}^B r_k {}^N r_k^\mathrm{T} \right] \cdot Q \right)
+	\end{equation*}
+	
+	This sum is referred to as the \textbf{attitude profile matrix} and is abbreviated by the symbol \( B \).  Removing the factor of two and switching to a maximization problem, we finally write Wahba's problem as linear in \( Q \).
+	
+	\begin{equation}
+		\boxed{ \max_{Q \in \mathrm{SO(3)}} \mathrm{tr}\left( B Q \right) }
+	\end{equation}
+	
+	\section{Convex Optimization}
+	
+	Before reviewing the convex relaxation, we must first lay the foundation for convex optimization.
+	
+	\subsection{Convex Sets}
+	
+	Informally, a set \( \mathcal{S} \) is a \textbf{convex set} if, for every two points \( x, y \) in \( \mathcal{S} \), the straight line connecting \( x \) and \( y \) remains entirely within the set.  Formally, for all \( x, y \) in \( \mathcal{S} \), and for any \( \alpha \) subject to \( 0 \le \alpha \le 1 \), we have
+	
+	\begin{equation*}
+		\alpha x + (1 - \alpha) y \in \mathcal{S} .
+	\end{equation*}
+	
+	\subsection{Convex Functions}
+	
+	Informally, a function \( f \) is a \textbf{convex function} if, for every two points \( x, y \) in the domain of \( f \), the straight line connecting \( f(x) \) and \( f(y) \) does not pass below \( f \).  Formally, the \textbf{epigraph} of \( f \) is the set of points lying \textit{above} (or on) the graph of \( f \).  The function \( f \) is convex if its epigraph is a convex set.  For example, the quadratic function \( f(x) = x^2 \) is a convex function, because the set
+	
+	\begin{equation*}
+		\{ (x, y) \, | \, y \ge x^2 \}
+	\end{equation*}
+	
+	is a convex set.
+	
+	\subsection{Convex Programs}
+	
+	An optimization problem is a \textbf{convex program} if its objective and constraints are convex.  Formally, the program
+	
+	\begin{equation}
+		\min_x f(x) \; \text{subject to } c(x) \le 0
+	\end{equation}
+	
+	is convex if \( f \) is a convex function and the set of \( x \) satisfying \( c(x) \le 0 \) is a convex set.  Convex programs are ``easy" to solve---they can be solved to \textit{global optimality} in \textit{polynomial time}, or they can be proven \textit{infeasible} (having no solution) in polynomial time.  Convex programs take a number of standard forms, including the following.
+	
+	\paragraph{Linear Program (LP)} A linear program has a linear objective and linear equality or inequality constraints.
+	
+	\paragraph{Quadratic Program (QP)} A quadratic program has a quadratic objective and linear equality or inequality constraints.
+	
+	\paragraph{Second-Order Cone Program (SOCP)} A second-order cone program has a linear objective and second-order cone constraints.  A second-order cone is a convex set resembling an ``ice cream cone".
+	
+	\paragraph{Semidefinite Program (SDP)} A semidefinite program has a linear objective and positive semidefinite constraints.  A matrix \( A \) is positive semidefinite (psd) if all of its eigenvalues are non-negative.
+\end{document}
